@@ -44,6 +44,8 @@ func RpcDefine(r *gin.Engine, ctx *RpcContext) {
 		c.Set(RpcResultField, ctx.Result)
 		//if ctx.AuthRequired {
 		//}
+		// Process Token
+		//
 		if ctx.Form != nil {
 			// Init Form object
 			form := reflect.New(reflect.TypeOf(ctx.Form)).Interface()

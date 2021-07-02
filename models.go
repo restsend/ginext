@@ -42,3 +42,12 @@ type GinTask struct {
 	ExecTime  sql.NullTime
 	EndTime   sql.NullTime
 }
+
+type GinToken struct {
+	ID        uint `gorm:"primarykey"`
+	CreatedAt time.Time
+	OwnerID   uint
+	Owner     GinExtUser
+	Token     string `gorm:"size:32;uniqueIndex"`
+	ExpiredAt time.Time
+}

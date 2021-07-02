@@ -20,22 +20,34 @@ const (
 	errServerError
 )
 
+const defaultTokenExpired = 7 * 86400 * time.Second
+const defaultTokenLength = 24
+
 type UserManager struct {
 	db           *gorm.DB
 	PasswordSalt string
+	TokenExpired time.Duration
+	TokenLength  int
 }
 
 func NewUserManager(db *gorm.DB) *UserManager {
 	return &UserManager{
 		db:           db,
 		PasswordSalt: "",
+		TokenExpired: defaultTokenExpired,
+		TokenLength:  defaultTokenLength,
 	}
 }
 
 func (um *UserManager) Init() (err error) {
 	err = um.db.AutoMigrate(&GinExtUser{})
 	if err != nil {
-		log.Panicf("Migrate User Fail %v", err)
+		log.Panicf("Migrate GinExtUser Fail %v", err)
+		return err
+	}
+	err = um.db.AutoMigrate(&GinToken{})
+	if err != nil {
+		log.Panicf("Migrate GinToken Fail %v", err)
 		return err
 	}
 	return nil

@@ -64,3 +64,27 @@ func TestUserUpdatePassword(t *testing.T) {
 		assert.NotNil(t, bobAuth)
 	}
 }
+
+func TestToken(t *testing.T) {
+	um, _ := NewTestUserManager()
+	bob, _ := um.Create("bob", "bob@example.org", "123456")
+
+	{
+		token, err := um.MakeToken(bob)
+		assert.Nil(t, err)
+		assert.LessOrEqual(t, defaultTokenLength, len(token.Token))
+		u, err := um.GetUserByToken(token.Token)
+		assert.Nil(t, err)
+		assert.NotNil(t, u)
+		assert.Equal(t, bob.UserName, u.Owner.UserName)
+
+		_, err = um.GetUserByToken("bad")
+		assert.NotNil(t, err)
+
+		err = um.DeleteToken(token.Token)
+		assert.Nil(t, err)
+
+		_, err = um.GetUserByToken(token.Token)
+		assert.NotNil(t, err)
+	}
+}
