@@ -39,6 +39,13 @@ func RpcFail(c *gin.Context, failCode int, msg string) {
 	})
 }
 
+func RpcError(c *gin.Context, err error) {
+	c.JSON(http.StatusOK, gin.H{
+		"code": http.StatusBadRequest,
+		"msg":  err.Error(),
+	})
+}
+
 func RpcDefine(r *gin.Engine, ctx *RpcContext) {
 	funcObj := func(c *gin.Context) {
 		c.Set(RpcResultField, ctx.Result)

@@ -3,6 +3,8 @@ package ginext
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -75,6 +77,39 @@ func (c *TestHTTPClient) CheckResponse(t *testing.T, w *httptest.ResponseRecorde
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	return response
+}
+
+// Rpc Call
+func (c *TestHTTPClient) Call(path string, form interface{}, result interface{}) error {
+	body, err := json.Marshal(form)
+	if err != nil {
+		return err
+	}
+	w := c.PostRaw(path, body)
+	if w.Code != http.StatusOK {
+		return errors.New("bad status :" + w.Result().Status)
+	}
+	respData := map[string]interface{}{}
+	err = json.Unmarshal(w.Body.Bytes(), &respData)
+	if err != nil {
+		return err
+	}
+	code := int(respData["code"].(float64))
+	if code != http.StatusOK {
+		return errors.New(respData["msg"].(string))
+	}
+
+	data, ok := respData["data"]
+	if !ok {
+		log.Println(respData)
+		return errors.New("bad resp not data key")
+	}
+
+	if result == nil {
+		return nil
+	}
+	content, _ := json.Marshal(data)
+	return json.Unmarshal(content, result)
 }
 
 func CheckSubSet(t *testing.T, expected, actual map[string]interface{}) {
