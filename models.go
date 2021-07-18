@@ -15,6 +15,7 @@ type GinExtUser struct {
 	FirstName   string `gorm:"size:128"`
 	LastName    string `gorm:"size:128"`
 	Password    string `gorm:"size:128"`
+	DisplayName string `gorm:"size:128"`
 	IsStaff     bool
 	Enabled     bool
 	LastLogin   sql.NullTime
@@ -24,7 +25,7 @@ type GinExtUser struct {
 type GinExtConfig struct {
 	ID    uint   `gorm:"primarykey"`
 	Key   string `gorm:"size:128;uniqueIndex"`
-	Value string `gorm:"size:1024"`
+	Value string
 }
 
 type GinTask struct {
