@@ -120,5 +120,29 @@ func (um *UserManager) hashPassword(password string) string {
 }
 
 func (um *UserManager) SetLastLogin(user *GinExtUser, lastIp string) {
-	um.db.Model(user).Updates(GinExtUser{LastLoginIP: lastIp, LastLogin: sql.NullTime{Time: time.Now(), Valid: true}})
+	vals := map[string]interface{}{
+		"LastLoginIP": lastIp,
+		"LastLogin":   sql.NullTime{Time: time.Now(), Valid: true},
+	}
+	um.db.Model(user).Updates(vals)
+}
+
+func (um *UserManager) SetEnabled(user *GinExtUser, val bool) {
+	um.db.Model(user).Updates(map[string]interface{}{"Enabled": val})
+}
+
+func (um *UserManager) SetIsStaff(user *GinExtUser, val bool) {
+	um.db.Model(user).Updates(map[string]interface{}{"IsStaff": val})
+}
+
+func (um *UserManager) SetPhone(user *GinExtUser, val string) {
+	um.db.Model(user).Updates(map[string]interface{}{"Phone": val})
+}
+
+func (um *UserManager) SetName(user *GinExtUser, firstName, lastName string) {
+	um.db.Model(user).Updates(map[string]interface{}{"FirstName": firstName, "LastName": lastName})
+}
+
+func (um *UserManager) SetDisplayName(user *GinExtUser, val string) {
+	um.db.Model(user).Updates(map[string]interface{}{"DisplayName": val})
 }

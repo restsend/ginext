@@ -2,6 +2,7 @@ package ginext
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -87,4 +88,25 @@ func TestToken(t *testing.T) {
 		_, err = um.GetUserByToken(token.Token)
 		assert.NotNil(t, err)
 	}
+}
+func TestBasicUpdate(t *testing.T) {
+	um, _ := NewTestUserManager()
+	bob, _ := um.Create("bob", "bob@example.org", "123456")
+
+	um.SetIsStaff(bob, true)
+	um.SetEnabled(bob, false)
+	um.SetDisplayName(bob, "new name")
+	um.SetName(bob, "xyz", "1234")
+	um.SetPhone(bob, "+11234567")
+	um.SetLastLogin(bob, "127.0.0.1")
+
+	bob, _ = um.Get("bob")
+
+	assert.Equal(t, true, bob.IsStaff)
+	assert.Equal(t, false, bob.Enabled)
+	assert.Equal(t, "new name", bob.DisplayName)
+	assert.Equal(t, "xyz", bob.FirstName)
+	assert.Equal(t, "1234", bob.LastName)
+	assert.Equal(t, "127.0.0.1", bob.LastLoginIP)
+	assert.LessOrEqual(t, 0*time.Second, time.Since(bob.LastLogin.Time))
 }

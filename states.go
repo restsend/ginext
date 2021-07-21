@@ -5,12 +5,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	SigUserLogin  = "user.login"
+	SigUserLogout = "user.logout"
+)
+
 func Login(c *gin.Context, user *GinExtUser) {
 	um := c.MustGet(UserMangerField).(*UserManager)
 	um.SetLastLogin(user, c.ClientIP())
 	session := sessions.Default(c)
 	session.Set(UserIdField, user.ID)
 	session.Save()
+	Sig().Emit(SigUserLogin, user)
 }
 
 func CurrentUser(c *gin.Context) (user *GinExtUser) {
@@ -38,4 +44,5 @@ func Logout(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Delete(UserIdField)
 	session.Save()
+	Sig().Emit(SigUserLogin, nil)
 }

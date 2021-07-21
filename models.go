@@ -12,6 +12,7 @@ type GinExtUser struct {
 
 	UserName    string `gorm:"size:128;uniqueIndex"`
 	Email       string `gorm:"size:128;uniqueIndex"`
+	Phone       string `gorm:"size:64;index"`
 	FirstName   string `gorm:"size:128"`
 	LastName    string `gorm:"size:128"`
 	Password    string `gorm:"size:128"`
@@ -19,7 +20,7 @@ type GinExtUser struct {
 	IsStaff     bool
 	Enabled     bool
 	LastLogin   sql.NullTime
-	LastLoginIP string
+	LastLoginIP string `gorm:"size:128"`
 }
 
 type GinExtConfig struct {
