@@ -49,10 +49,15 @@ func RpcError(c *gin.Context, err error) {
 func RpcDefine(r *gin.Engine, ctx *RpcContext) {
 	funcObj := func(c *gin.Context) {
 		c.Set(RpcResultField, ctx.Result)
-		//if ctx.AuthRequired {
-		//}
-		// Process Token
-		//
+		if ctx.AuthRequired {
+			if CurrentUser(c) == nil {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"error": "auth required",
+				})
+				return
+			}
+		}
+
 		if ctx.Form != nil {
 			// Init Form object
 			form := reflect.New(reflect.TypeOf(ctx.Form)).Interface()

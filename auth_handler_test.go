@@ -38,7 +38,7 @@ func TestUserRegister(t *testing.T) {
 		w := client.Post("/auth/register", data)
 		resp := client.CheckResponse(t, w)
 		assert.NotNil(t, resp)
-		assert.Equal(t, resp["msg"], "Username is exists")
+		assert.Equal(t, resp["msg"], "username is exists")
 	}
 }
 
@@ -68,7 +68,7 @@ func TestUserLogin(t *testing.T) {
 		w := client.Post("/auth/login", data)
 		resp := client.CheckResponse(t, w)
 		assert.NotNil(t, resp)
-		assert.Equal(t, resp["msg"], "Bad password")
+		assert.Equal(t, resp["msg"], "bad password")
 	}
 }
 

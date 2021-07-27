@@ -17,25 +17,33 @@ const (
 	errEmailExists
 	errBadPassword
 	errInvalidParams
+	errNotAllowed
+	errActiveRequired
 	errServerError
 )
 
 const defaultTokenExpired = 7 * 86400 * time.Second
 const defaultTokenLength = 24
+const defaultActiveRequired = false
+const key_ACTIVE_REQUIRED = "GINEXT_ACTIVE_REQUIRED"
 
 type UserManager struct {
-	db           *gorm.DB
-	PasswordSalt string
-	TokenExpired time.Duration
-	TokenLength  int
+	ext            *GinExt
+	db             *gorm.DB
+	PasswordSalt   string
+	TokenExpired   time.Duration
+	TokenLength    int
+	ActiveRequired bool
 }
 
-func NewUserManager(db *gorm.DB) *UserManager {
+func NewUserManager(ext *GinExt) *UserManager {
 	return &UserManager{
-		db:           db,
-		PasswordSalt: "",
-		TokenExpired: defaultTokenExpired,
-		TokenLength:  defaultTokenLength,
+		ext:            ext,
+		db:             ext.DbInstance,
+		PasswordSalt:   "",
+		TokenExpired:   defaultTokenExpired,
+		TokenLength:    defaultTokenLength,
+		ActiveRequired: defaultActiveRequired,
 	}
 }
 
@@ -50,6 +58,7 @@ func (um *UserManager) Init() (err error) {
 		log.Panicf("Migrate GinToken Fail %v", err)
 		return err
 	}
+	um.ext.CheckValue(key_ACTIVE_REQUIRED, "false")
 	return nil
 }
 
@@ -63,6 +72,7 @@ func (um *UserManager) Create(username, email, password string) (user *GinExtUse
 		Email:    email,
 		Password: um.hashPassword(password),
 		Enabled:  true,
+		Actived:  false,
 	}
 
 	result := um.db.Create(&user)
@@ -127,6 +137,10 @@ func (um *UserManager) SetLastLogin(user *GinExtUser, lastIp string) {
 	um.db.Model(user).Updates(vals)
 }
 
+func (um *UserManager) SetActived(user *GinExtUser, val bool) {
+	um.db.Model(user).Updates(map[string]interface{}{"Actived": val})
+}
+
 func (um *UserManager) SetEnabled(user *GinExtUser, val bool) {
 	um.db.Model(user).Updates(map[string]interface{}{"Enabled": val})
 }
@@ -145,4 +159,18 @@ func (um *UserManager) SetName(user *GinExtUser, firstName, lastName string) {
 
 func (um *UserManager) SetDisplayName(user *GinExtUser, val string) {
 	um.db.Model(user).Updates(map[string]interface{}{"DisplayName": val})
+}
+
+func (um *UserManager) CheckForceActived(user *GinExtUser) bool {
+	if user.Actived {
+		return true
+	}
+
+	val := strings.ToLower(um.ext.GetValue(key_ACTIVE_REQUIRED))
+	if val == "true" || val == "1" {
+		if !user.Actived {
+			return false
+		}
+	}
+	return true
 }

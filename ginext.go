@@ -92,7 +92,7 @@ func NewGinExt(appDir string) *GinExt {
 	if len(withMysql) > 0 {
 		/*
 			docker run -ti --rm -e MYSQL_ALLOW_EMPTY_PASSWORD=1 -e MYSQL_DATABASE=testdb -p 12306:3306 mysql:8.0.23
-			export WITH_MYSQL="root@tcp(127.0.0.1:12306)/testdb?charset=utf8&parseTime=True&loc=Local"
+			export WITH_MYSQL="root@tcp(127.0.0.1:12306)/testdb?charset=utf8mb4&parseTime=True&loc=Local"
 		*/
 		cfg.DbDSN = withMysql
 		cfg.DbDriver = "mysql"

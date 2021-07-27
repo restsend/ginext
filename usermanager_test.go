@@ -12,7 +12,7 @@ func NewTestUserManager() (um *UserManager, r *gin.Engine) {
 	cfg := NewGinExt("..")
 	cfg.Init()
 
-	um = NewUserManager(cfg.DbInstance)
+	um = NewUserManager(cfg)
 	um.Init()
 	um.db.Delete(&GinExtUser{}, "id > 0")
 	r = gin.Default()

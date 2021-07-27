@@ -148,18 +148,18 @@ func (um *UserManager) RegisterHandler(prefix string, r *gin.Engine) {
 func (um *UserManager) handleRegister(c *gin.Context) {
 	form := c.MustGet(RpcFormField).(*RegisterUserForm)
 	if um.IsExists(form.UserName) {
-		RpcFail(c, errUsernameExists, "Username is exists")
+		RpcFail(c, errUsernameExists, "username is exists")
 		return
 	}
 
 	if um.IsExistsByEmail(form.Email) {
-		RpcFail(c, errEmailExists, "Email is exists")
+		RpcFail(c, errEmailExists, "email is exists")
 		return
 	}
 
 	user, err := um.Create(form.UserName, form.Email, form.Password)
 	if err != nil {
-		RpcFail(c, errServerError, "Create user fail")
+		RpcFail(c, errServerError, "create user fail")
 		return
 	}
 
@@ -176,7 +176,7 @@ func (um *UserManager) handleRegister(c *gin.Context) {
 func (um *UserManager) handleLogin(c *gin.Context) {
 	form := c.MustGet(RpcFormField).(*LoginForm)
 	if len(form.Email) <= 0 && len(form.UserName) <= 0 {
-		RpcFail(c, errInvalidParams, "Bad username or password")
+		RpcFail(c, errInvalidParams, "bad username or password")
 		return
 	}
 	key := form.UserName
@@ -185,9 +185,24 @@ func (um *UserManager) handleLogin(c *gin.Context) {
 	}
 	user, err := um.Auth(key, form.Password)
 	if err != nil {
-		RpcFail(c, errInvalidParams, "Bad password")
+		RpcFail(c, errInvalidParams, "bad password")
 		return
 	}
+	if !user.Enabled {
+		RpcFail(c, errInvalidParams, "user is not enabled")
+		return
+	}
+
+	if !user.Enabled {
+		RpcFail(c, errNotAllowed, "user is not allow login")
+		return
+	}
+
+	if !um.CheckForceActived(user) {
+		RpcFail(c, errActiveRequired, "user need actived first")
+		return
+	}
+
 	// Login ..
 	//
 	Login(c, user)
@@ -201,7 +216,7 @@ func (um *UserManager) handleLogin(c *gin.Context) {
 func (um *UserManager) handleToken(c *gin.Context) {
 	form := c.MustGet(RpcFormField).(*LoginForm)
 	if len(form.Email) <= 0 && len(form.UserName) <= 0 {
-		RpcFail(c, errInvalidParams, "Bad username or password")
+		RpcFail(c, errInvalidParams, "bad username or password")
 		return
 	}
 	key := form.UserName
@@ -210,13 +225,13 @@ func (um *UserManager) handleToken(c *gin.Context) {
 	}
 	user, err := um.Auth(key, form.Password)
 	if err != nil {
-		RpcFail(c, errInvalidParams, "Bad password")
+		RpcFail(c, errInvalidParams, "bad password")
 		return
 	}
 
 	token, err := um.MakeToken(user)
 	if err != nil {
-		RpcFail(c, errInvalidParams, "Token build fail")
+		RpcFail(c, errInvalidParams, "token build fail")
 		return
 	}
 

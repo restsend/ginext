@@ -19,6 +19,7 @@ type GinExtUser struct {
 	DisplayName string `gorm:"size:128"`
 	IsStaff     bool
 	Enabled     bool
+	Actived     bool
 	LastLogin   sql.NullTime
 	LastLoginIP string `gorm:"size:128"`
 }
