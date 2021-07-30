@@ -33,10 +33,18 @@ type LoginForm struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type TokenRefreshForm struct {
+	Token string `json:"token"`
+}
+
+type PasswordLostForm struct {
+	Email string `json:"email" binding:"required"`
+}
+
 type PasswordResetForm struct {
 	Email    string `json:"email" binding:"required"`
-	Password string `json:"password"`
-	Code     string `json:"code"`
+	Password string `json:"password" binding:"required"`
+	Code     string `json:"code" binding:"required"`
 }
 
 type UserInfoResult struct {
@@ -118,6 +126,7 @@ func (um *UserManager) RegisterHandler(prefix string, r *gin.Engine) {
 		Doc:          docToken,
 	})
 	RpcDefine(r, &RpcContext{
+		Form:         TokenRefreshForm{},
 		OnlyPost:     true,
 		RelativePath: filepath.Join(prefix, "/refresh"),
 		Handler:      um.handleRefresh,
@@ -130,7 +139,7 @@ func (um *UserManager) RegisterHandler(prefix string, r *gin.Engine) {
 	})
 	RpcDefine(r, &RpcContext{
 		OnlyPost:     true,
-		Form:         PasswordResetForm{},
+		Form:         PasswordLostForm{},
 		RelativePath: filepath.Join(prefix, "/password/lost"),
 		Handler:      um.handlePasswordLost,
 		Doc:          docPasswordLost,
@@ -185,21 +194,7 @@ func (um *UserManager) handleLogin(c *gin.Context) {
 	}
 	user, err := um.Auth(key, form.Password)
 	if err != nil {
-		RpcFail(c, errInvalidParams, "bad password")
-		return
-	}
-	if !user.Enabled {
-		RpcFail(c, errInvalidParams, "user is not enabled")
-		return
-	}
-
-	if !user.Enabled {
-		RpcFail(c, errNotAllowed, "user is not allow login")
-		return
-	}
-
-	if !um.CheckForceActived(user) {
-		RpcFail(c, errActiveRequired, "user need actived first")
+		RpcFail(c, errInvalidParams, err.Error())
 		return
 	}
 
@@ -225,7 +220,7 @@ func (um *UserManager) handleToken(c *gin.Context) {
 	}
 	user, err := um.Auth(key, form.Password)
 	if err != nil {
-		RpcFail(c, errInvalidParams, "bad password")
+		RpcFail(c, errInvalidParams, err.Error())
 		return
 	}
 
@@ -251,9 +246,27 @@ func (um *UserManager) handleLogout(c *gin.Context) {
 }
 
 func (um *UserManager) handleRefresh(c *gin.Context) {
+	form := c.MustGet(RpcFormField).(*TokenRefreshForm)
+	userToken, err := um.GetUserByToken(form.Token)
+	if err != nil {
+		RpcFail(c, errInvalidParams, err.Error())
+		return
+	}
+
+	expire, err := um.TouchToken(userToken.ID)
+	if err != nil {
+		RpcFail(c, errInvalidParams, err.Error())
+		return
+	}
+
+	RpcOk(c, TokenResult{
+		Token:     userToken.Token,
+		ExpiredAt: expire,
+	})
 }
 
 func (um *UserManager) handlePasswordLost(c *gin.Context) {
+
 }
 
 func (um *UserManager) handlePasswordReset(c *gin.Context) {

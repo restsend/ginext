@@ -24,26 +24,23 @@ const (
 
 const defaultTokenExpired = 7 * 86400 * time.Second
 const defaultTokenLength = 24
-const defaultActiveRequired = false
 const key_ACTIVE_REQUIRED = "GINEXT_ACTIVE_REQUIRED"
 
 type UserManager struct {
-	ext            *GinExt
-	db             *gorm.DB
-	PasswordSalt   string
-	TokenExpired   time.Duration
-	TokenLength    int
-	ActiveRequired bool
+	ext          *GinExt
+	db           *gorm.DB
+	PasswordSalt string
+	TokenExpired time.Duration
+	TokenLength  int
 }
 
 func NewUserManager(ext *GinExt) *UserManager {
 	return &UserManager{
-		ext:            ext,
-		db:             ext.DbInstance,
-		PasswordSalt:   "",
-		TokenExpired:   defaultTokenExpired,
-		TokenLength:    defaultTokenLength,
-		ActiveRequired: defaultActiveRequired,
+		ext:          ext,
+		db:           ext.DbInstance,
+		PasswordSalt: "",
+		TokenExpired: defaultTokenExpired,
+		TokenLength:  defaultTokenLength,
 	}
 }
 
@@ -106,6 +103,15 @@ func (um *UserManager) Auth(usernameOrEmail, rawPassword string) (user *GinExtUs
 	if user.Password != hashVal {
 		return nil, errors.New("bad password")
 	}
+
+	if !user.Enabled {
+		return nil, errors.New("user is not allow login")
+	}
+
+	if !um.CheckForceActived(user) {
+		return nil, errors.New("user need actived first")
+	}
+
 	return user, nil
 }
 

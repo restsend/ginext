@@ -34,9 +34,10 @@ func (um *UserManager) GetUserByToken(token string) (obj *GinToken, err error) {
 	return obj, nil
 }
 
-func (um *UserManager) TouchToken(tokenId uint) (err error) {
-	result := um.db.Model(&GinToken{}).Where("id", tokenId).UpdateColumn("ExpiredAt", time.Now().Add(um.TokenExpired))
-	return result.Error
+func (um *UserManager) TouchToken(tokenId uint) (expire time.Time, err error) {
+	expire = time.Now().Add(um.TokenExpired)
+	result := um.db.Model(&GinToken{}).Where("id", tokenId).UpdateColumn("ExpiredAt", expire)
+	return expire, result.Error
 }
 
 func (um *UserManager) DeleteToken(token string) (err error) {
