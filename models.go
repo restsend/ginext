@@ -17,11 +17,18 @@ type GinExtUser struct {
 	LastName    string `gorm:"size:128"`
 	Password    string `gorm:"size:128"`
 	DisplayName string `gorm:"size:128"`
+
 	IsStaff     bool
 	Enabled     bool
 	Actived     bool
 	LastLogin   sql.NullTime
 	LastLoginIP string `gorm:"size:128"`
+
+	Source    string `gorm:"size:64;index"`
+	WxOpenID  string `gorm:"size:100;"`
+	WxUnionID string `gorm:"size:100;"`
+	FBAuthID  string `gorm:"size:100;"`
+	GGAuthID  string `gorm:"size:100;"`
 }
 
 type GinExtConfig struct {
@@ -53,4 +60,18 @@ type GinToken struct {
 	Owner     GinExtUser
 	Token     string `gorm:"size:32;uniqueIndex"`
 	ExpiredAt time.Time
+}
+
+type GinProfile struct {
+	ID     uint       `json:"id" gorm:"primarykey"`
+	UserID uint       `json:"userId"`
+	User   GinExtUser `json:"-"`
+
+	Avatar   string `json:"avatar" gorm:"size:1024;"`
+	Gender   string `json:"gender" gorm:"size:12;"`
+	Province string `json:"province" gorm:"size:32;"`
+	City     string `json:"city" gorm:"size:32;"`
+	Country  string `json:"country" gorm:"size:32;"`
+	Locale   string `json:"locale" gorm:"size:8;"`
+	Timezone string `json:"timezone" gorm:"size:64;"`
 }

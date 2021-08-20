@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 	"time"
 
@@ -45,15 +46,17 @@ func NewUserManager(ext *GinExt) *UserManager {
 }
 
 func (um *UserManager) Init() (err error) {
-	err = um.db.AutoMigrate(&GinExtUser{})
-	if err != nil {
-		log.Panicf("Migrate GinExtUser Fail %v", err)
-		return err
+	tables := []interface{}{
+		&GinExtUser{},
+		&GinToken{},
+		&GinProfile{},
 	}
-	err = um.db.AutoMigrate(&GinToken{})
-	if err != nil {
-		log.Panicf("Migrate GinToken Fail %v", err)
-		return err
+	for _, t := range tables {
+		err = um.db.AutoMigrate(t)
+		if err != nil {
+			log.Panicf("Migrate %s Fail %v", reflect.TypeOf(t).Name(), err)
+			return err
+		}
 	}
 	um.ext.CheckValue(key_ACTIVE_REQUIRED, "false")
 	return nil
@@ -179,4 +182,30 @@ func (um *UserManager) CheckForceActived(user *GinExtUser) bool {
 		}
 	}
 	return true
+}
+
+// Profile
+func (um *UserManager) UpdateProfile(user *GinExtUser, profile *GinProfile) (p *GinProfile, err error) {
+	vals := map[string]interface{}{
+		"Avatar":   profile.Avatar,
+		"Gender":   profile.Gender,
+		"Province": profile.Province,
+		"City":     profile.City,
+		"Country":  profile.Country,
+		"Locale":   profile.Locale,
+		"Timezone": profile.Timezone,
+	}
+	var val GinProfile
+	result := um.db.Where("user_id", user.ID).Attrs(vals).Assign(vals).FirstOrCreate(&val)
+	return &val, result.Error
+}
+
+func (um *UserManager) GetProfile(user *GinExtUser) (profile *GinProfile, err error) {
+	var val GinProfile
+	result := um.db.Where("user_id", user.ID).FirstOrCreate(&val)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	val.User = *user
+	return &val, nil
 }

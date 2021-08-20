@@ -110,3 +110,35 @@ func TestBasicUpdate(t *testing.T) {
 	assert.Equal(t, "127.0.0.1", bob.LastLoginIP)
 	assert.LessOrEqual(t, 0*time.Second, time.Since(bob.LastLogin.Time))
 }
+func TestProfile(t *testing.T) {
+	um, _ := NewTestUserManager()
+	bob, _ := um.Create("bob", "bob@example.org", "123456")
+	{
+		p, err := um.GetProfile(bob)
+		assert.Nil(t, err)
+		assert.Equal(t, p.UserID, bob.ID)
+		assert.Equal(t, p.User.Email, "bob@example.org")
+	}
+	{
+		p, err := um.GetProfile(bob)
+		assert.Nil(t, err)
+		assert.Equal(t, p.User.Email, "bob@example.org")
+	}
+	{
+		p, _ := um.GetProfile(bob)
+		p.Avatar = "mockavator"
+		_, err := um.UpdateProfile(bob, p)
+		assert.Nil(t, err)
+		p, _ = um.GetProfile(bob)
+		assert.Equal(t, p.Avatar, "mockavator")
+	}
+	{
+		p, _ := um.GetProfile(bob)
+		p.Gender = "male"
+		_, err := um.UpdateProfile(bob, p)
+		assert.Nil(t, err)
+		p, _ = um.GetProfile(bob)
+		assert.Equal(t, p.Avatar, "mockavator")
+		assert.Equal(t, p.Gender, "male")
+	}
+}
