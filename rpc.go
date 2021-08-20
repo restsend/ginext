@@ -26,6 +26,7 @@ func RpcOk(c *gin.Context, obj interface{}) {
 			log.Printf("incorrect result type %s required:%s != result:%s", c.Request.URL.Path, reflect.TypeOf(resultType), reflect.TypeOf(obj))
 		}
 	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
 		"data": obj,
@@ -33,14 +34,14 @@ func RpcOk(c *gin.Context, obj interface{}) {
 }
 
 func RpcFail(c *gin.Context, failCode int, msg string) {
-	c.JSON(http.StatusOK, gin.H{
+	c.AbortWithStatusJSON(http.StatusOK, gin.H{
 		"code": failCode,
 		"msg":  msg,
 	})
 }
 
 func RpcError(c *gin.Context, err error) {
-	c.JSON(http.StatusOK, gin.H{
+	c.AbortWithStatusJSON(http.StatusOK, gin.H{
 		"code": http.StatusBadRequest,
 		"msg":  err.Error(),
 	})
