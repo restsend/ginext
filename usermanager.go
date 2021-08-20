@@ -196,7 +196,7 @@ func (um *UserManager) UpdateProfile(user *GinExtUser, profile *GinProfile) (p *
 		"Timezone": profile.Timezone,
 	}
 	var val GinProfile
-	result := um.db.Where("user_id", user.ID).Attrs(vals).Assign(vals).FirstOrCreate(&val)
+	result := um.db.Where("user_id", user.ID).Assign(vals).FirstOrCreate(&val)
 	return &val, result.Error
 }
 
