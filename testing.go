@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -101,7 +99,6 @@ func (c *TestHTTPClient) Call(path string, form interface{}, result interface{})
 
 	data, ok := respData["data"]
 	if !ok {
-		log.Println(respData)
 		return errors.New("bad resp not data key")
 	}
 
@@ -110,27 +107,4 @@ func (c *TestHTTPClient) Call(path string, form interface{}, result interface{})
 	}
 	content, _ := json.Marshal(data)
 	return json.Unmarshal(content, result)
-}
-
-func CheckSubSet(t *testing.T, expected, actual map[string]interface{}) {
-	for k, v := range expected {
-		av, ok := actual[k]
-		assert.True(t, ok, "not found:"+k)
-		if v == nil {
-			assert.Nil(t, av)
-			continue
-		}
-		vt := reflect.TypeOf(v)
-		avt := reflect.ValueOf(av)
-		var newValue reflect.Value
-		{
-			defer func() {
-				if recover() != nil {
-					assert.Fail(t, "value type not equal, expect type:", vt, ", actual type:", avt)
-				}
-			}()
-			newValue = avt.Convert(vt)
-		}
-		assert.Equal(t, v, newValue.Interface(), "not equal:"+k)
-	}
 }

@@ -68,13 +68,3 @@ func TestTimeParse(t *testing.T) {
 		assert.Equal(t, "2021-01-02 11:04:05", ut)
 	}
 }
-
-func TestCheckSubset(t *testing.T) {
-	data := map[string]interface{}{
-		"Text": "Hello",
-	}
-	CheckSubSet(t, map[string]interface{}{
-		"Text": "Hello",
-	}, data)
-
-}

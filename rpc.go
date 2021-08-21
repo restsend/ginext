@@ -1,6 +1,7 @@
 package ginext
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"reflect"
@@ -41,6 +42,8 @@ func RpcFail(c *gin.Context, failCode int, msg string) {
 }
 
 func RpcError(c *gin.Context, err error) {
+	errMsg := fmt.Sprintf("[RpcError]\t%s\t%s\t%s\n", c.ClientIP(), c.Request.URL.Path, err.Error())
+	log.Default().Output(2, errMsg)
 	c.AbortWithStatusJSON(http.StatusOK, gin.H{
 		"code": http.StatusBadRequest,
 		"msg":  err.Error(),
