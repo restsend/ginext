@@ -1,7 +1,6 @@
 package ginext
 
 import (
-	"database/sql"
 	"time"
 )
 
@@ -21,7 +20,7 @@ type GinExtUser struct {
 	IsStaff     bool
 	Enabled     bool
 	Actived     bool
-	LastLogin   sql.NullTime
+	LastLogin   *time.Time
 	LastLoginIP string `gorm:"size:128"`
 
 	Source    string `gorm:"size:64;index"`
@@ -48,9 +47,9 @@ type GinTask struct {
 	Context  string
 	Result   string
 	// Delay to invoke
-	StartTime sql.NullTime `gorm:"index"`
-	ExecTime  sql.NullTime
-	EndTime   sql.NullTime
+	StartTime *time.Time `gorm:"index"`
+	ExecTime  *time.Time
+	EndTime   *time.Time
 }
 
 type GinToken struct {

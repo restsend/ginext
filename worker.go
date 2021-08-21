@@ -2,7 +2,6 @@ package ginext
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log"
 	"time"
@@ -83,8 +82,8 @@ func (w *Worker) pullTasks() error {
 	}
 
 	for _, t := range ts {
-		if t.StartTime.Valid {
-			if time.Since(t.StartTime.Time) < 0 {
+		if t.StartTime != nil {
+			if time.Since(*t.StartTime) < 0 {
 				continue
 			}
 		}
@@ -107,9 +106,9 @@ func (w *Worker) DoTask(t *GinTask) error {
 	if !ok {
 		return errors.New("unknown task type")
 	}
-
+	now := time.Now()
 	vals := map[string]interface{}{
-		"ExecTime": sql.NullTime{Time: time.Now(), Valid: true},
+		"ExecTime": &now,
 	}
 
 	var handleResult string
@@ -125,7 +124,8 @@ func (w *Worker) DoTask(t *GinTask) error {
 	if err != nil {
 		vals["Failed"] = true
 	}
-	vals["EndTime"] = sql.NullTime{Time: time.Now(), Valid: true}
+	now = time.Now()
+	vals["EndTime"] = &now
 	vals["Result"] = handleResult
 	vals["Done"] = true
 	w.db.Model(&t).UpdateColumns(vals)
@@ -173,12 +173,10 @@ func (wm *WorkerManager) Add(objectID int64, taskType, context string, delays ti
 		Done:      false,
 		Context:   context,
 		Result:    "",
-		ExecTime:  sql.NullTime{},
-		EndTime:   sql.NullTime{},
 	}
 	if delays.Seconds() > 0 {
-		o.StartTime.Time = time.Now().Add(delays)
-		o.StartTime.Valid = true
+		now := time.Now().Add(delays)
+		o.StartTime = &now
 	}
 	if wm == nil {
 		log.Panic("wm is nil", wm)

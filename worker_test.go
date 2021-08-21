@@ -82,9 +82,9 @@ func TestWorker(t *testing.T) {
 		tx.Find(&ts)
 		assert.Equal(t, len(ts), 2)
 
-		assert.GreaterOrEqual(t, ts[0].ExecTime.Time.Sub(startTime), 1*time.Second)
-		assert.GreaterOrEqual(t, time.Since(ts[0].ExecTime.Time), 0*time.Second)
-		assert.GreaterOrEqual(t, time.Since(ts[1].ExecTime.Time), 0*time.Second)
+		assert.GreaterOrEqual(t, ts[0].ExecTime.Sub(startTime), 1*time.Second)
+		assert.GreaterOrEqual(t, time.Since(*ts[0].ExecTime), 0*time.Second)
+		assert.GreaterOrEqual(t, time.Since(*ts[1].ExecTime), 0*time.Second)
 	}
 }
 func TestWorkerFail(t *testing.T) {

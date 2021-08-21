@@ -108,7 +108,7 @@ func TestBasicUpdate(t *testing.T) {
 	assert.Equal(t, "xyz", bob.FirstName)
 	assert.Equal(t, "1234", bob.LastName)
 	assert.Equal(t, "127.0.0.1", bob.LastLoginIP)
-	assert.LessOrEqual(t, 0*time.Second, time.Since(bob.LastLogin.Time))
+	assert.LessOrEqual(t, 0*time.Second, time.Since(*bob.LastLogin))
 }
 func TestProfile(t *testing.T) {
 	um, _ := NewTestUserManager()

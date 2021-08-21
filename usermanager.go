@@ -2,7 +2,6 @@ package ginext
 
 import (
 	"crypto/md5"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -139,9 +138,10 @@ func (um *UserManager) hashPassword(password string) string {
 }
 
 func (um *UserManager) SetLastLogin(user *GinExtUser, lastIp string) {
+	now := time.Now()
 	vals := map[string]interface{}{
 		"LastLoginIP": lastIp,
-		"LastLogin":   sql.NullTime{Time: time.Now(), Valid: true},
+		"LastLogin":   &now,
 	}
 	um.db.Model(user).Updates(vals)
 }

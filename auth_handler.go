@@ -48,9 +48,9 @@ type PasswordResetForm struct {
 }
 
 type UserInfoResult struct {
-	UserName  string    `json:"username"`
-	Email     string    `json:"email"`
-	LastLogin time.Time `json:"lastLogin"`
+	UserName  string     `json:"username"`
+	Email     string     `json:"email"`
+	LastLogin *time.Time `json:"lastLogin,omitempty"`
 }
 
 type TokenResult struct {
@@ -177,7 +177,7 @@ func (um *UserManager) handleRegister(c *gin.Context) {
 	RpcOk(c, UserInfoResult{
 		UserName:  user.UserName,
 		Email:     user.Email,
-		LastLogin: user.LastLogin.Time,
+		LastLogin: user.LastLogin,
 	})
 }
 
@@ -204,7 +204,7 @@ func (um *UserManager) handleLogin(c *gin.Context) {
 	RpcOk(c, UserInfoResult{
 		UserName:  user.UserName,
 		Email:     user.Email,
-		LastLogin: user.LastLogin.Time,
+		LastLogin: user.LastLogin,
 	})
 }
 
