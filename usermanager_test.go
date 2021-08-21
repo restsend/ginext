@@ -114,30 +114,30 @@ func TestProfile(t *testing.T) {
 	um, _ := NewTestUserManager()
 	bob, _ := um.Create("bob", "bob@example.org", "123456")
 	{
-		p, err := um.GetProfile(bob)
+		p, err := GetProfile(um.db, bob.ID)
 		assert.Nil(t, err)
 		assert.Equal(t, p.UserID, bob.ID)
 		assert.Equal(t, p.User.Email, "bob@example.org")
 	}
 	{
-		p, err := um.GetProfile(bob)
+		p, err := GetProfile(um.db, bob.ID)
 		assert.Nil(t, err)
 		assert.Equal(t, p.User.Email, "bob@example.org")
 	}
 	{
-		p, _ := um.GetProfile(bob)
+		p, _ := GetProfile(um.db, bob.ID)
 		p.Avatar = "mockavator"
-		_, err := um.UpdateProfile(bob, p)
+		_, err := UpdateProfile(um.db, bob.ID, p)
 		assert.Nil(t, err)
-		p, _ = um.GetProfile(bob)
+		p, _ = GetProfile(um.db, bob.ID)
 		assert.Equal(t, p.Avatar, "mockavator")
 	}
 	{
-		p, _ := um.GetProfile(bob)
+		p, _ := GetProfile(um.db, bob.ID)
 		p.Gender = "male"
-		_, err := um.UpdateProfile(bob, p)
+		_, err := UpdateProfile(um.db, bob.ID, p)
 		assert.Nil(t, err)
-		p, _ = um.GetProfile(bob)
+		p, _ = GetProfile(um.db, bob.ID)
 		assert.Equal(t, p.Avatar, "mockavator")
 		assert.Equal(t, p.Gender, "male")
 	}

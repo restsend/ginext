@@ -185,7 +185,7 @@ func (um *UserManager) CheckForceActived(user *GinExtUser) bool {
 }
 
 // Profile
-func (um *UserManager) UpdateProfile(user *GinExtUser, profile *GinProfile) (p *GinProfile, err error) {
+func UpdateProfile(db *gorm.DB, userId uint, profile *GinProfile) (p *GinProfile, err error) {
 	vals := map[string]interface{}{
 		"Avatar":   profile.Avatar,
 		"Gender":   profile.Gender,
@@ -196,16 +196,21 @@ func (um *UserManager) UpdateProfile(user *GinExtUser, profile *GinProfile) (p *
 		"Timezone": profile.Timezone,
 	}
 	var val GinProfile
-	result := um.db.Where("user_id", user.ID).Assign(vals).FirstOrCreate(&val)
+	result := db.Where("user_id", userId).Preload("User").Assign(vals).FirstOrCreate(&val)
+	if result.RowsAffected > 0 {
+		db.Take(&val.User, val.UserID)
+	}
 	return &val, result.Error
 }
 
-func (um *UserManager) GetProfile(user *GinExtUser) (profile *GinProfile, err error) {
+func GetProfile(db *gorm.DB, userId uint) (profile *GinProfile, err error) {
 	var val GinProfile
-	result := um.db.Where("user_id", user.ID).FirstOrCreate(&val)
+	result := db.Where("user_id", userId).Preload("User").FirstOrCreate(&val)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	val.User = *user
+	if result.RowsAffected > 0 {
+		db.Take(&val.User, val.UserID)
+	}
 	return &val, nil
 }
