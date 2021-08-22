@@ -8,6 +8,7 @@ import (
 const (
 	SigUserLogin  = "user.login"
 	SigUserLogout = "user.logout"
+	SigUserCreate = "user.create"
 )
 
 func Login(c *gin.Context, user *GinExtUser) {

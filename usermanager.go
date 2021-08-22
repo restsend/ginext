@@ -143,6 +143,8 @@ func (um *UserManager) SetLastLogin(user *GinExtUser, lastIp string) {
 		"LastLoginIP": lastIp,
 		"LastLogin":   &now,
 	}
+	user.LastLogin = &now
+	user.LastLoginIP = lastIp
 	um.db.Model(user).Updates(vals)
 }
 
