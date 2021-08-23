@@ -8,6 +8,7 @@ import (
 const (
 	SigUserLogin  = "user.login"
 	SigUserLogout = "user.logout"
+	SigUserCreate = "user.create"
 )
 
 func Login(c *gin.Context, user *GinExtUser) {
@@ -16,7 +17,7 @@ func Login(c *gin.Context, user *GinExtUser) {
 	session := sessions.Default(c)
 	session.Set(UserIdField, user.ID)
 	session.Save()
-	Sig().Emit(SigUserLogin, user)
+	Sig().Emit(SigUserLogin, user, c)
 }
 
 func CurrentUser(c *gin.Context) (user *GinExtUser) {
@@ -44,5 +45,5 @@ func Logout(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Delete(UserIdField)
 	session.Save()
-	Sig().Emit(SigUserLogin, nil)
+	Sig().Emit(SigUserLogin, nil, c)
 }

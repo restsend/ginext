@@ -173,6 +173,7 @@ func (um *UserManager) handleRegister(c *gin.Context) {
 	}
 
 	um.SetLastLogin(user, c.ClientIP())
+	Sig().Emit(SigUserCreate, user, c)
 
 	RpcOk(c, UserInfoResult{
 		UserName:  user.UserName,
