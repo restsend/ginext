@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"math/rand"
+	"reflect"
 	"text/template"
 	"time"
 
@@ -87,4 +88,29 @@ func SafeCall(f func() error, failHandle func(error)) error {
 		}
 	}()
 	return f()
+}
+
+func FormAsMap(form interface{}, fields []string) (vals map[string]interface{}) {
+	vals = make(map[string]interface{})
+	v := reflect.ValueOf(form)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return vals
+	}
+	for i := 0; i < len(fields); i++ {
+		k := v.FieldByName(fields[i])
+		if !k.IsValid() || k.IsZero() {
+			continue
+		}
+		if k.Kind() == reflect.Ptr {
+			if !k.IsNil() {
+				vals[fields[i]] = k.Elem().Interface()
+			}
+		} else {
+			vals[fields[i]] = k.Interface()
+		}
+	}
+	return vals
 }
