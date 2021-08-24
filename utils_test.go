@@ -68,3 +68,32 @@ func TestTimeParse(t *testing.T) {
 		assert.Equal(t, "2021-01-02 11:04:05", ut)
 	}
 }
+
+type testMapForm struct {
+	ID     uint    `json:"id" binding:"required"`
+	Title  *string `json:"title"`
+	Source *string `json:"source"`
+}
+
+func TestFormAsMap(t *testing.T) {
+	title := "title"
+	form := testMapForm{
+		ID:    100,
+		Title: &title,
+	}
+	{
+		vals := FormAsMap(form, []string{"Title", "Target"})
+		assert.Equal(t, 1, len(vals))
+		assert.Equal(t, title, vals["Title"])
+	}
+	{
+		vals := FormAsMap(form, []string{"ID", "Source"})
+		assert.Equal(t, 1, len(vals))
+		assert.Equal(t, uint(100), vals["ID"])
+	}
+	{
+		vals := FormAsMap(&form, []string{"ID", "Source"})
+		assert.Equal(t, 1, len(vals))
+		assert.Equal(t, uint(100), vals["ID"])
+	}
+}
