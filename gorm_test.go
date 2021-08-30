@@ -60,5 +60,4 @@ func TestGinUniqueKey(t *testing.T) {
 	assert.Nil(t, result.Error)
 	result = cfg.DbInstance.Create(&u0)
 	assert.NotNil(t, result.Error)
-
 }
