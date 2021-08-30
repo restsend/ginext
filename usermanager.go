@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 const (
@@ -197,8 +198,14 @@ func UpdateProfile(db *gorm.DB, userId uint, profile *GinProfile) (p *GinProfile
 		"Locale":   profile.Locale,
 		"Timezone": profile.Timezone,
 	}
-	var val GinProfile
-	result := db.Where("user_id", userId).Preload("User").Assign(vals).FirstOrCreate(&val)
+	val := *profile
+	result := db.Clauses(
+		clause.OnConflict{
+			Columns: []clause.Column{
+				{Name: "user_id"},
+			},
+			DoUpdates: clause.Assignments(vals),
+		}).Create(&val)
 	if result.RowsAffected > 0 {
 		db.Take(&val.User, val.UserID)
 	}

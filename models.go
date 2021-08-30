@@ -63,7 +63,7 @@ type GinToken struct {
 
 type GinProfile struct {
 	ID     uint       `json:"id" gorm:"primarykey"`
-	UserID uint       `json:"userId"`
+	UserID uint       `json:"userId" gorm:"uniqueIndex"`
 	User   GinExtUser `json:"-"`
 
 	Avatar   string `json:"avatar" gorm:"size:1024;"`
