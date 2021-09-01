@@ -21,7 +21,7 @@ func ListObjectEx(c *gin.Context, tx *gorm.DB, r interface{}, form *PaginationFo
 		if len(form.GetKeyword()) > 0 {
 			sc := strings.Count(searchKey, "?")
 			k := "%" + form.GetKeyword() + "%"
-			args := make([]interface{}, sc)
+			args := make([]interface{}, 0)
 			for i := 0; i < sc; i++ {
 				args = append(args, k)
 			}
