@@ -48,6 +48,10 @@ func ListObjectEx(c *gin.Context, tx *gorm.DB, r interface{}, form *PaginationFo
 		tx = tx.Offset(form.GetPos()).Limit(form.GetLimit())
 	}
 
+	if len(order) > 0 {
+		tx = tx.Order(order)
+	}
+
 	result = tx.Find(items)
 
 	if result.Error != nil {
