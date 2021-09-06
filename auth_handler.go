@@ -20,11 +20,12 @@ import (
 */
 
 type RegisterUserForm struct {
-	UserName  string `json:"username" binding:"required"`
-	Email     string `json:"email" binding:"required"`
-	Password  string `json:"password" binding:"required"`
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
+	UserName    string `json:"username" binding:"required"`
+	Email       string `json:"email" binding:"required"`
+	Password    string `json:"password" binding:"required"`
+	DisplayName string `json:"displayName"`
+	FirstName   string `json:"firstName"`
+	LastName    string `json:"lastName"`
 }
 
 type LoginForm struct {
@@ -51,6 +52,25 @@ type UserInfoResult struct {
 	UserName  string     `json:"username"`
 	Email     string     `json:"email"`
 	LastLogin *time.Time `json:"lastLogin,omitempty"`
+}
+
+type UserProfileResult struct {
+	UserName    string `json:"username"`
+	Email       string `json:"email"`
+	DisplayName string `json:"displayName"`
+	FirstName   string `json:"firstName"`
+	LastName    string `json:"lastName"`
+
+	LastLogin   *time.Time `json:"last_login;omitempty"`
+	LastLoginIP string     `json:"last_login_ip"`
+
+	Avatar   string `json:"avatar"`
+	Gender   string `json:"gender"`
+	Province string `json:"province"`
+	City     string `json:"city"`
+	Country  string `json:"country"`
+	Locale   string `json:"locale"`
+	Timezone string `json:"timezone"`
 }
 
 type TokenResult struct {
@@ -88,6 +108,7 @@ func (um *UserManager) loadUMWithGin() gin.HandlerFunc {
 
 const docRegister = `Register user`
 const docLogin = `User login`
+const docProfile = `User profile`
 const docToken = `User get accesstoken with username and password`
 const docRefresh = `User refresh AccessToken`
 const docLogout = `User logout`
@@ -116,6 +137,13 @@ func (um *UserManager) RegisterHandler(prefix string, r *gin.Engine) {
 		RelativePath: filepath.Join(prefix, "/login"),
 		Handler:      um.handleLogin,
 		Doc:          docLogin,
+	})
+	RpcDefine(r, &RpcContext{
+		AuthRequired: true,
+		Result:       UserProfileResult{},
+		RelativePath: filepath.Join(prefix, "/profile"),
+		Handler:      um.handleProfile,
+		Doc:          docProfile,
 	})
 	RpcDefine(r, &RpcContext{
 		Form:         LoginForm{},
@@ -171,6 +199,20 @@ func (um *UserManager) handleRegister(c *gin.Context) {
 		RpcFail(c, errServerError, "create user fail")
 		return
 	}
+	vals := map[string]interface{}{}
+	if len(form.DisplayName) > 0 {
+		vals["DisplayName"] = form.DisplayName
+	}
+	if len(form.FirstName) > 0 {
+		vals["FirstName"] = form.FirstName
+	}
+	if len(form.LastName) > 0 {
+		vals["LastName"] = form.LastName
+	}
+
+	if len(vals) > 0 {
+		um.db.Model(user).Updates(vals)
+	}
 
 	um.SetLastLogin(user, c.ClientIP())
 	Sig().Emit(SigUserCreate, user, c)
@@ -207,6 +249,32 @@ func (um *UserManager) handleLogin(c *gin.Context) {
 		Email:     user.Email,
 		LastLogin: user.LastLogin,
 	})
+}
+
+func (um *UserManager) handleProfile(c *gin.Context) {
+	user := CurrentUser(c)
+	profile, err := GetProfile(um.db, user.ID)
+	if err != nil {
+		RpcError(c, err)
+		return
+	}
+	r := UserProfileResult{
+		UserName:    user.UserName,
+		Email:       user.Email,
+		DisplayName: user.DisplayName,
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
+		LastLogin:   user.LastLogin,
+		LastLoginIP: user.LastLoginIP,
+		Avatar:      profile.Avatar,
+		Gender:      profile.Gender,
+		Province:    profile.Province,
+		City:        profile.City,
+		Country:     profile.Country,
+		Locale:      profile.Locale,
+		Timezone:    profile.Timezone,
+	}
+	RpcOk(c, r)
 }
 
 func (um *UserManager) handleToken(c *gin.Context) {

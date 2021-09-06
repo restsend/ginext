@@ -10,17 +10,15 @@ import (
 )
 
 func addUser(t *testing.T, client *TestHTTPClient, r *gin.Engine, username, email, password string) {
-	data := map[string]interface{}{
-		"username": username,
-		"email":    email,
-		"password": password,
+	form := RegisterUserForm{
+		UserName: username,
+		Email:    email,
+		Password: password,
 	}
-
-	w := client.Post("/auth/register", data)
-	resp := client.CheckResponse(t, w)
-	assert.NotNil(t, resp)
-	resultData := resp["data"].(map[string]interface{})
-	assert.Equal(t, resultData["username"], "bob")
+	var info UserInfoResult
+	err := client.Call("/auth/register", &form, &info)
+	assert.Nil(t, err)
+	assert.Equal(t, username, info.UserName)
 }
 
 func TestUserRegister(t *testing.T) {
@@ -29,17 +27,44 @@ func TestUserRegister(t *testing.T) {
 	client := NewTestHTTPClient(r)
 	addUser(t, client, r, "bob", "bob@example.org", "123456")
 	{
-		data := map[string]interface{}{
-			"username": "bob",
-			"email":    "bob@example.org",
-			"password": "123456",
+		form := RegisterUserForm{
+			UserName: "bob",
+			Email:    "bob@example.org",
+			Password: "123456",
 		}
 
-		client := NewTestHTTPClient(r)
-		w := client.Post("/auth/register", data)
-		resp := client.CheckResponse(t, w)
-		assert.NotNil(t, resp)
-		assert.Equal(t, resp["msg"], "username is exists")
+		var info UserInfoResult
+		err := client.Call("/auth/register", &form, &info)
+		assert.NotNil(t, err)
+		assert.Equal(t, err.Error(), "username is exists")
+	}
+	{
+		form := RegisterUserForm{
+			UserName:    "alice",
+			Email:       "alice@example.org",
+			Password:    "123456",
+			DisplayName: "AliceD",
+			FirstName:   "AliceF",
+			LastName:    "AliceL",
+		}
+		var r UserInfoResult
+		err := client.Call("/auth/register", &form, &r)
+		assert.Nil(t, err)
+
+		loginForm := LoginForm{
+			UserName: "alice",
+			Password: "123456",
+		}
+		var loginR UserInfoResult
+		err = client.Call("/auth/login", &loginForm, &loginR)
+		assert.Nil(t, err)
+
+		var profile UserProfileResult
+		err = client.Call("/auth/profile", nil, &profile)
+		assert.Nil(t, err)
+		assert.Equal(t, profile.DisplayName, form.DisplayName)
+		assert.Equal(t, profile.FirstName, form.FirstName)
+		assert.Equal(t, profile.LastName, form.LastName)
 	}
 }
 
@@ -51,25 +76,24 @@ func TestUserLogin(t *testing.T) {
 	addUser(t, client, r, "bob", "bob@example.org", "123456")
 
 	{
-		data := map[string]interface{}{
-			"username": "bob",
-			"password": "123456",
+		form := LoginForm{
+			UserName: "bob",
+			Password: "123456",
 		}
-		w := client.Post("/auth/login", data)
-		resp := client.CheckResponse(t, w)
-		assert.NotNil(t, resp)
-		resultData := resp["data"].(map[string]interface{})
-		assert.Equal(t, resultData["username"], "bob")
+		var loginR UserInfoResult
+		err := client.Call("/auth/login", &form, &loginR)
+		assert.Nil(t, err)
+		assert.Equal(t, loginR.UserName, form.UserName)
 	}
 	{
-		data := map[string]interface{}{
-			"username": "bob",
-			"password": "123",
+		form := RegisterUserForm{
+			UserName: "bob",
+			Password: "123",
 		}
-		w := client.Post("/auth/login", data)
-		resp := client.CheckResponse(t, w)
-		assert.NotNil(t, resp)
-		assert.Equal(t, resp["msg"], "bad password")
+		var info UserInfoResult
+		err := client.Call("/auth/login", &form, &info)
+		assert.NotNil(t, err)
+		assert.Equal(t, err.Error(), "bad password")
 	}
 }
 
@@ -81,15 +105,13 @@ func TestLoginSession(t *testing.T) {
 	addUser(t, client, r, "bob", "bob@example.org", "123456")
 
 	{
-		data := map[string]interface{}{
-			"username": "bob",
-			"password": "123456",
+		form := LoginForm{
+			UserName: "bob",
+			Password: "123456",
 		}
-		w := client.Post("/auth/login", data)
-		resp := client.CheckResponse(t, w)
-		assert.NotNil(t, resp)
-		resultData := resp["data"].(map[string]interface{})
-		assert.Equal(t, resultData["username"], "bob")
+		var loginR UserInfoResult
+		err := client.Call("/auth/login", &form, &loginR)
+		assert.Nil(t, err)
 
 		r.POST("/current", func(c *gin.Context) {
 			curretUser := CurrentUser(c)
@@ -104,16 +126,16 @@ func TestLoginSession(t *testing.T) {
 			}
 		})
 
-		w = client.Post("/current", data)
-		resp = client.CheckResponse(t, w)
+		w := client.Post("/current", nil)
+		resp := client.CheckResponse(t, w)
 		assert.NotNil(t, resp)
 		assert.Equal(t, resp["username"], "bob")
 
-		w = client.Post("/auth/logout", data)
+		w = client.Post("/auth/logout", nil)
 		resp = client.CheckResponse(t, w)
 		assert.NotNil(t, resp)
 
-		w = client.Post("/current", data)
+		w = client.Post("/current", nil)
 		resp = client.CheckResponse(t, w)
 		assert.NotNil(t, resp)
 		assert.Equal(t, resp["username"], "BAD SESSION")
