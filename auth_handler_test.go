@@ -46,6 +46,8 @@ func TestUserRegister(t *testing.T) {
 			DisplayName: "AliceD",
 			FirstName:   "AliceF",
 			LastName:    "AliceL",
+			Timezone:    "-480",
+			Locale:      "zh-CN",
 		}
 		var r UserInfoResult
 		err := client.Call("/auth/register", &form, &r)
@@ -65,6 +67,8 @@ func TestUserRegister(t *testing.T) {
 		assert.Equal(t, profile.DisplayName, form.DisplayName)
 		assert.Equal(t, profile.FirstName, form.FirstName)
 		assert.Equal(t, profile.LastName, form.LastName)
+		assert.Equal(t, profile.Timezone, form.Timezone)
+		assert.Equal(t, profile.Locale, form.Locale)
 	}
 }
 

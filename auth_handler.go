@@ -26,6 +26,8 @@ type RegisterUserForm struct {
 	DisplayName string `json:"displayName"`
 	FirstName   string `json:"firstName"`
 	LastName    string `json:"lastName"`
+	Locale      string `json:"locale"`
+	Timezone    string `json:"timezone"`
 }
 
 type LoginForm struct {
@@ -212,6 +214,15 @@ func (um *UserManager) handleRegister(c *gin.Context) {
 
 	if len(vals) > 0 {
 		um.db.Model(user).Updates(vals)
+	}
+
+	if len(form.Timezone) > 0 || len(form.Locale) > 0 {
+		profile, err := GetProfile(um.db, user.ID)
+		if err == nil {
+			profile.Locale = form.Locale
+			profile.Timezone = form.Timezone
+			UpdateProfile(um.db, user.ID, profile)
+		}
 	}
 
 	um.SetLastLogin(user, c.ClientIP())
