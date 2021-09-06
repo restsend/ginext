@@ -63,8 +63,8 @@ type UserProfileResult struct {
 	FirstName   string `json:"firstName"`
 	LastName    string `json:"lastName"`
 
-	LastLogin   *time.Time `json:"last_login;omitempty"`
-	LastLoginIP string     `json:"last_login_ip"`
+	LastLogin   *time.Time `json:"lastLogin,omitempty"`
+	LastLoginIP string     `json:"lastLoginIp"`
 
 	Avatar   string `json:"avatar"`
 	Gender   string `json:"gender"`
