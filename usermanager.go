@@ -173,6 +173,12 @@ func (um *UserManager) SetDisplayName(user *GinExtUser, val string) {
 	um.db.Model(user).Updates(map[string]interface{}{"DisplayName": val})
 }
 
+func (um *UserManager) SetSource(user *GinExtUser, val string) {
+	if len(user.Source) <= 0 {
+		um.db.Model(user).Updates(map[string]interface{}{"Source": val})
+	}
+}
+
 func (um *UserManager) CheckForceActived(user *GinExtUser) bool {
 	if user.Actived {
 		return true
