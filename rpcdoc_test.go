@@ -60,7 +60,7 @@ func TestDocString(t *testing.T) {
 
 	assert.NotNil(t, rpcDocs)
 	assert.Equal(t, len(rpcDocs), 2)
-	assert.Equal(t, len(rpcDocs[0].Fields), 6)
+	assert.Equal(t, len(rpcDocs[0].Fields), 8)
 	assert.Equal(t, rpcDocs[0].Fields[0].Name, "username")
 	assert.Equal(t, rpcDocs[0].Fields[0].Type, "string")
 	assert.True(t, rpcDocs[0].Fields[0].Required)
