@@ -20,9 +20,9 @@ import (
 */
 
 type RegisterUserForm struct {
-	UserName    string `json:"username" binding:"required"`
 	Email       string `json:"email" binding:"required"`
 	Password    string `json:"password" binding:"required"`
+	UserName    string `json:"username"`
 	DisplayName string `json:"displayName"`
 	FirstName   string `json:"firstName"`
 	LastName    string `json:"lastName"`
@@ -186,6 +186,10 @@ func (um *UserManager) RegisterHandler(prefix string, r *gin.Engine) {
 //handleRegister User Register
 func (um *UserManager) handleRegister(c *gin.Context) {
 	form := c.MustGet(RpcFormField).(*RegisterUserForm)
+	if form.UserName == "" {
+		form.UserName = form.Email
+	}
+	
 	if um.IsExists(form.UserName) {
 		RpcFail(c, errUsernameExists, "username is exists")
 		return
