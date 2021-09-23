@@ -74,3 +74,13 @@ type GinProfile struct {
 	Locale   string `json:"locale" gorm:"size:8;"`
 	Timezone string `json:"timezone" gorm:"size:64;"`
 }
+
+func (u *GinExtUser) GetVisibleName() string {
+	if len(u.DisplayName) > 0 {
+		return u.DisplayName
+	}
+	if len(u.FirstName) > 0 {
+		return u.FirstName
+	}
+	return u.LastName
+}
