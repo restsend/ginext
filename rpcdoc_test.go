@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"reflect"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -80,5 +81,16 @@ func TestDocString(t *testing.T) {
 
 	body := w.Body.String()
 	assert.Contains(t, body, ApiDocsJSONUri)
+}
 
+func TestParseField(t *testing.T) {
+	type testForm struct {
+		PaginationForm
+		Val string `json:"val"`
+	}
+	f := testForm{}
+	fields := parseFileds(reflect.TypeOf(f))
+	assert.Equal(t, 5, len(fields))
+	assert.Equal(t, "keyword", fields[0].Name)
+	assert.Equal(t, "val", fields[4].Name)
 }

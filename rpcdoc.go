@@ -141,18 +141,20 @@ func asJsonType(intype string) string {
 	return intype
 }
 
-func parseFileds(s interface{}) []RpcDocField {
-	if s == nil {
-		return nil
-	}
-
-	rt := reflect.TypeOf(s)
+func parseFileds(rt reflect.Type) []RpcDocField {
 	if rt.Kind() != reflect.Struct {
 		return nil
 	}
 	var docFields []RpcDocField
 	for i := 0; i < rt.NumField(); i++ {
 		f := rt.Field(i)
+
+		if f.Anonymous && f.Type.Kind() == reflect.Struct {
+			//
+			embedRT := parseFileds(f.Type)
+			docFields = append(docFields, embedRT...)
+			continue
+		}
 
 		jsonTag := f.Tag.Get("json")
 
@@ -196,7 +198,9 @@ func AddDoc(ctx *RpcContext) {
 		AuthRequired: ctx.AuthRequired,
 		OnlyPost:     ctx.OnlyPost,
 		RelativePath: ctx.RelativePath,
-		Fields:       parseFileds(ctx.Form),
+	}
+	if ctx.Form != nil {
+		doc.Fields = parseFileds(reflect.TypeOf(ctx.Form))
 	}
 
 	if ctx.Result != nil {
