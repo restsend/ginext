@@ -100,6 +100,11 @@ func NewGinExt(appDir string) *GinExt {
 	return cfg
 }
 
+func (c *GinExt) Session() *GinExt {
+	v := *c
+	v.DbInstance = c.DbInstance.Session(&gorm.Session{})
+	return &v
+}
 func (c *GinExt) FilePath(path string) string {
 	return filepath.Join(c.AppDir, path)
 }
@@ -234,14 +239,18 @@ func (cfg *GinExt) WithGinExt(r *gin.Engine) {
 	}
 }
 
-func (cfg *GinExt) GetValue(key string) string {
+func GetValueEx(db *gorm.DB, key string) string {
 	var v GinExtConfig
 	newKey := strings.ToUpper(key)
-	result := cfg.DbInstance.Where("key", newKey).Take(&v)
+	result := db.Where("key", newKey).Take(&v)
 	if result.Error != nil {
 		return ""
 	}
 	return v.Value
+}
+
+func (cfg *GinExt) GetValue(key string) string {
+	return GetValueEx(cfg.DbInstance, key)
 }
 
 func (cfg *GinExt) CheckValue(key, defaultValue string) {

@@ -29,7 +29,7 @@ type Worker struct {
 
 func NewWorker(db *gorm.DB, name string) *Worker {
 	w := &Worker{
-		db:           db,
+		db:           db.Session(&gorm.Session{}),
 		Name:         name,
 		PullInterval: 1 * time.Second,
 		PullTaskNum:  20,
