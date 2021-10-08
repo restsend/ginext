@@ -249,6 +249,21 @@ func GetValueEx(db *gorm.DB, key string) string {
 	return v.Value
 }
 
+func SetValueEx(db *gorm.DB, key, value string) {
+	var v GinExtConfig
+	newKey := strings.ToUpper(key)
+	result := db.Where("key", newKey).Take(&v)
+	if result.Error != nil {
+		newV := &GinExtConfig{
+			Key:   newKey,
+			Value: value,
+		}
+		db.Create(&newV)
+		return
+	}
+	db.Model(&GinExtConfig{}).Where("key", newKey).UpdateColumn("value", value)
+}
+
 func (cfg *GinExt) GetValue(key string) string {
 	return GetValueEx(cfg.DbInstance, key)
 }
@@ -260,16 +275,5 @@ func (cfg *GinExt) CheckValue(key, defaultValue string) {
 }
 
 func (cfg *GinExt) SetValue(key, value string) {
-	var v GinExtConfig
-	newKey := strings.ToUpper(key)
-	result := cfg.DbInstance.Where("key", newKey).Take(&v)
-	if result.Error != nil {
-		newV := &GinExtConfig{
-			Key:   newKey,
-			Value: value,
-		}
-		cfg.DbInstance.Create(&newV)
-		return
-	}
-	cfg.DbInstance.Model(&GinExtConfig{}).Where("key", newKey).UpdateColumn("value", value)
+	SetValueEx(cfg.DbInstance, key, value)
 }
