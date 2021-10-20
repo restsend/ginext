@@ -17,13 +17,22 @@ func init() {
 }
 
 var letterRunes = []rune("0123456789abcdefghijklmnopqrstuvwxyz")
+var numberRunes = []rune("0123456789")
 
-func RandText(n int) string {
+func randRunes(n int, source []rune) string {
 	b := make([]rune, n)
 	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+		b[i] = source[rand.Intn(len(source))]
 	}
 	return string(b)
+}
+
+func RandText(n int) string {
+	return randRunes(n, letterRunes)
+}
+
+func RandNumberText(n int) string {
+	return randRunes(n, numberRunes)
 }
 
 const dateFmt = "%Y-%m-%d"

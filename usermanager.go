@@ -53,6 +53,7 @@ func (um *UserManager) Init() (err error) {
 		&GinExtUser{},
 		&GinToken{},
 		&GinProfile{},
+		&GinVerifyCode{},
 	}
 	for _, t := range tables {
 		err = um.db.AutoMigrate(t)
@@ -205,7 +206,7 @@ func (um *UserManager) genVerifyCode(user *GinExtUser, email string) (string, st
 	if user != nil {
 		key += fmt.Sprintf("-%d", user.ID)
 	}
-	code := RandText(defaultVerifyCodeLength)
+	code := RandNumberText(defaultVerifyCodeLength)
 	val := GinVerifyCode{
 		Key:       key,
 		Source:    email,
@@ -236,8 +237,8 @@ func (um *UserManager) verifyCode(key, email, code string) bool {
 	if val.Verified {
 		return false
 	}
-	if val.Code != code {
-		um.db.Where("id", val.ID).UpdateColumn("fail_count", val.FailCount+1)
+	if val.Code != code || val.Source != email {
+		um.db.Model(&val).UpdateColumn("fail_count", val.FailCount+1)
 		return false
 	}
 	um.db.Delete(&val)

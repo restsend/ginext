@@ -142,3 +142,31 @@ func TestProfile(t *testing.T) {
 		assert.Equal(t, p.Gender, "male")
 	}
 }
+
+func TestVerifyCode(t *testing.T) {
+	um, _ := NewTestUserManager()
+	{
+		key, code := um.genVerifyCode(nil, "bob@example.org")
+		assert.Equal(t, len(code), defaultVerifyCodeLength)
+		assert.GreaterOrEqual(t, len(key), defaultVerifyCodeLength)
+
+		r := um.verifyCode(key, "test@example.org", code)
+		assert.False(t, r)
+		var v GinVerifyCode
+		result := um.db.Where("key", key).Take(&v)
+		assert.Nil(t, result.Error)
+		assert.Equal(t, v.FailCount, 1)
+		for i := 0; i < defaultMaxVerifyFailCount; i++ {
+			r = um.verifyCode(key, "test@example.org", code)
+			assert.False(t, r)
+		}
+		r = um.verifyCode(key, "bob@example.org", code)
+		assert.False(t, r)
+	}
+
+	{
+		key, code := um.genVerifyCode(nil, "bob@example.org")
+		r := um.verifyCode(key, "bob@example.org", code)
+		assert.True(t, r)
+	}
+}
