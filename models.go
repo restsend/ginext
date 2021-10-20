@@ -78,8 +78,8 @@ type GinProfile struct {
 type GinVerifyCode struct {
 	ID        uint   `gorm:"primarykey"`
 	Key       string `gorm:"size:64;uniqueIndex"`
-	Source    string `gorm:"size:200;index"`
-	Code      string `gorm:"size:12;index"`
+	Source    string `gorm:"size:200"`
+	Code      string `gorm:"size:12"`
 	FailCount int
 	Verified  bool
 	ExpiredAt time.Time
