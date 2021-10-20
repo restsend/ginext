@@ -156,7 +156,7 @@ func TestVerifyCode(t *testing.T) {
 		result := um.db.Where("key", key).Take(&v)
 		assert.Nil(t, result.Error)
 		assert.Equal(t, v.FailCount, 1)
-		for i := 0; i < defaultMaxVerifyFailCount; i++ {
+		for i := 0; i < defaultVerifyMaxFailCount; i++ {
 			r = um.verifyCode(key, "test@example.org", code)
 			assert.False(t, r)
 		}

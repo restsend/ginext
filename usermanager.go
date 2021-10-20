@@ -26,8 +26,10 @@ const (
 const defaultTokenExpired = 7 * 86400 * time.Second
 const defaultTokenLength = 24
 const key_ACTIVE_REQUIRED = "GINEXT_ACTIVE_REQUIRED"
-const defaultCodeExpired = 180 * time.Second
-const defaultMaxVerifyFailCount = 5
+
+const defaultVerifyKeyLength = 24
+const defaultVerifyCodeExpired = 180 * time.Second
+const defaultVerifyMaxFailCount = 5
 const defaultVerifyCodeLength = 6
 
 type UserManager struct {
@@ -36,6 +38,11 @@ type UserManager struct {
 	PasswordSalt string
 	TokenExpired time.Duration
 	TokenLength  int
+
+	VerifyCodeExpired      time.Duration
+	VerifyKeyLength        int
+	VerifyCodeLength       int
+	VerifyCodeMaxFailCount int
 }
 
 func NewUserManager(ext *GinExt) *UserManager {
@@ -45,6 +52,11 @@ func NewUserManager(ext *GinExt) *UserManager {
 		PasswordSalt: "",
 		TokenExpired: defaultTokenExpired,
 		TokenLength:  defaultTokenLength,
+
+		VerifyCodeExpired:      defaultVerifyCodeExpired,
+		VerifyKeyLength:        defaultVerifyKeyLength,
+		VerifyCodeLength:       defaultVerifyCodeLength,
+		VerifyCodeMaxFailCount: defaultVerifyMaxFailCount,
 	}
 }
 
@@ -202,18 +214,18 @@ func (um *UserManager) CheckForceActived(user *GinExtUser) bool {
 }
 
 func (um *UserManager) genVerifyCode(user *GinExtUser, email string) (string, string) {
-	key := RandText(20)
+	key := RandText(um.VerifyKeyLength)
 	if user != nil {
 		key += fmt.Sprintf("-%d", user.ID)
 	}
-	code := RandNumberText(defaultVerifyCodeLength)
+	code := RandNumberText(um.VerifyCodeLength)
 	val := GinVerifyCode{
 		Key:       key,
 		Source:    email,
 		Code:      code,
 		FailCount: 0,
 		Verified:  false,
-		ExpiredAt: time.Now().Add(defaultCodeExpired),
+		ExpiredAt: time.Now().Add(um.VerifyCodeExpired),
 	}
 	result := um.db.Create(&val)
 	if result.Error != nil {
@@ -231,7 +243,7 @@ func (um *UserManager) verifyCode(key, email, code string) bool {
 	if time.Since(val.ExpiredAt) > 0 {
 		return false
 	}
-	if val.FailCount > defaultMaxVerifyFailCount {
+	if val.FailCount > um.VerifyCodeMaxFailCount {
 		return false
 	}
 	if val.Verified {
