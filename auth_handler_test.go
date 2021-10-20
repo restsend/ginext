@@ -229,3 +229,151 @@ func TestActivedLogin(t *testing.T) {
 		assert.EqualError(t, err, "user need actived first")
 	}
 }
+
+func TestVerifyBindEmail(t *testing.T) {
+	um, r := NewTestUserManager()
+	um.RegisterHandler("/auth", r)
+
+	client := NewTestHTTPClient(r)
+	addUser(t, client, r, "bob", "bademail@unittest", "123456")
+	code := ""
+	Sig().Connect(SigUserVerifyEmail, func(sender interface{}, params ...interface{}) {
+		code = params[1].(string)
+	})
+
+	{
+		form := VerifyEmailForm{
+			Email: "bob@example.org",
+		}
+		key := ""
+		err := client.Call("/auth/verifyemail", &form, &key)
+		assert.NotNil(t, err)
+		assert.Contains(t, err.Error(), "Unauthorized")
+	}
+	{
+		form := LoginForm{
+			UserName: "bob",
+			Password: "123456",
+		}
+		var loginR UserInfoResult
+		err := client.Call("/auth/login", &form, &loginR)
+		assert.Nil(t, err)
+	}
+	{
+		form := VerifyEmailForm{
+			Email: "bob@example.org",
+		}
+		key := ""
+		err := client.Call("/auth/verifyemail", &form, &key)
+		assert.Nil(t, err)
+		assert.NotEmpty(t, key)
+
+		bform := BindEmailForm{
+			Email:    "bob@example.org",
+			Password: "778899",
+			Key:      key,
+			Code:     code,
+		}
+		r := false
+		err = client.Call("/auth/bindemail", &bform, &r)
+		assert.Nil(t, err)
+		assert.True(t, r)
+	}
+	{
+		form := LoginForm{
+			UserName: "bob",
+			Password: "123456",
+		}
+		var loginR UserInfoResult
+		err := client.Call("/auth/login", &form, &loginR)
+		assert.NotNil(t, err)
+
+		form.Password = "778899"
+		err = client.Call("/auth/login", &form, &loginR)
+		assert.Nil(t, err)
+	}
+}
+
+func TestResetpassword(t *testing.T) {
+	um, r := NewTestUserManager()
+	um.RegisterHandler("/auth", r)
+
+	client := NewTestHTTPClient(r)
+	addUser(t, client, r, "bob", "bob@example.org", "123456")
+	code := ""
+	Sig().Connect(SigUserResetpassword, func(sender interface{}, params ...interface{}) {
+		code = params[1].(string)
+	})
+	{
+		form := PasswordLostForm{
+			Email: "bob@example.org",
+		}
+		key := ""
+		err := client.Call("/auth/password/lost", &form, &key)
+		assert.Nil(t, err)
+		assert.NotEmpty(t, key)
+
+		bform := PasswordResetForm{
+			Email:    "bob@example.org",
+			Password: "778899",
+			Key:      key,
+			Code:     code,
+		}
+		r := false
+		err = client.Call("/auth/password/reset", &bform, &r)
+		assert.Nil(t, err)
+		assert.True(t, r)
+	}
+	{
+		form := LoginForm{
+			UserName: "bob",
+			Password: "123456",
+		}
+		var loginR UserInfoResult
+		err := client.Call("/auth/login", &form, &loginR)
+		assert.NotNil(t, err)
+
+		form.Password = "778899"
+		err = client.Call("/auth/login", &form, &loginR)
+		assert.Nil(t, err)
+	}
+}
+
+func TestChangepassword(t *testing.T) {
+	um, r := NewTestUserManager()
+	um.RegisterHandler("/auth", r)
+	client := NewTestHTTPClient(r)
+	addUser(t, client, r, "bob", "bob@example.org", "123456")
+
+	{
+		form := LoginForm{
+			UserName: "bob",
+			Password: "123456",
+		}
+		var loginR UserInfoResult
+		err := client.Call("/auth/login", &form, &loginR)
+		assert.Nil(t, err)
+	}
+	{
+		form := PasswordChangeForm{
+			Password: "778899",
+		}
+		r := false
+		err := client.Call("/auth/password/change", &form, &r)
+		assert.Nil(t, err)
+		assert.True(t, r)
+	}
+	{
+		form := LoginForm{
+			UserName: "bob",
+			Password: "123456",
+		}
+		var loginR UserInfoResult
+		err := client.Call("/auth/login", &form, &loginR)
+		assert.NotNil(t, err)
+
+		form.Password = "778899"
+		err = client.Call("/auth/login", &form, &loginR)
+		assert.Nil(t, err)
+	}
+}

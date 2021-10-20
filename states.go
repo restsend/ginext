@@ -6,10 +6,15 @@ import (
 )
 
 const (
-	SigUserLogin         = "user.login"
-	SigUserLogout        = "user.logout"
-	SigUserCreate        = "user.create"
-	SigUserVerifyEmail   = "user.verifyemail"
+	//SigUserLogin: user *GinExtUser, c *gin.Context
+	SigUserLogin = "user.login"
+	//SigUserLogout: user *GinExtUser, c *gin.Context
+	SigUserLogout = "user.logout"
+	//SigUserCreate: user *GinExtUser, c *gin.Context
+	SigUserCreate = "user.create"
+	//SigUserVerifyEmail: user *GinExtUser, email string , code string
+	SigUserVerifyEmail = "user.verifyemail"
+	//SigUserResetpassword: user *GinExtUser, email string , code string
 	SigUserResetpassword = "user.resetpassword"
 )
 
