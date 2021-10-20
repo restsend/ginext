@@ -75,6 +75,16 @@ type GinProfile struct {
 	Timezone string `json:"timezone" gorm:"size:64;"`
 }
 
+type GinVerifyCode struct {
+	ID        uint   `gorm:"primarykey"`
+	Key       string `gorm:"size:64;uniqueIndex"`
+	Source    string `gorm:"size:200;index"`
+	Code      string `gorm:"size:12;index"`
+	FailCount int
+	Verified  bool
+	ExpiredAt time.Time
+}
+
 func (u *GinExtUser) GetVisibleName() string {
 	if len(u.DisplayName) > 0 {
 		return u.DisplayName

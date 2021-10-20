@@ -26,6 +26,9 @@ const (
 const defaultTokenExpired = 7 * 86400 * time.Second
 const defaultTokenLength = 24
 const key_ACTIVE_REQUIRED = "GINEXT_ACTIVE_REQUIRED"
+const defaultCodeExpired = 180 * time.Second
+const defaultMaxVerifyFailCount = 5
+const defaultVerifyCodeLength = 6
 
 type UserManager struct {
 	ext          *GinExt
@@ -149,6 +152,10 @@ func (um *UserManager) SetLastLogin(user *GinExtUser, lastIp string) {
 	um.db.Model(user).Updates(vals)
 }
 
+func (um *UserManager) SetEmail(user *GinExtUser, val string) {
+	um.db.Model(user).Updates(map[string]interface{}{"Email": val})
+}
+
 func (um *UserManager) SetActived(user *GinExtUser, val bool) {
 	um.db.Model(user).Updates(map[string]interface{}{"Actived": val})
 }
@@ -190,6 +197,50 @@ func (um *UserManager) CheckForceActived(user *GinExtUser) bool {
 			return false
 		}
 	}
+	return true
+}
+
+func (um *UserManager) genVerifyCode(user *GinExtUser, email string) (string, string) {
+	key := RandText(20)
+	if user != nil {
+		key += fmt.Sprintf("-%d", user.ID)
+	}
+	code := RandText(defaultVerifyCodeLength)
+	val := GinVerifyCode{
+		Key:       key,
+		Source:    email,
+		Code:      code,
+		FailCount: 0,
+		Verified:  false,
+		ExpiredAt: time.Now().Add(defaultCodeExpired),
+	}
+	result := um.db.Create(&val)
+	if result.Error != nil {
+		return "", ""
+	}
+	return key, code
+}
+
+func (um *UserManager) verifyCode(key, email, code string) bool {
+	var val GinVerifyCode
+	result := um.db.Where("key", key).Take(&val)
+	if result.Error != nil {
+		return false
+	}
+	if time.Since(val.ExpiredAt) > 0 {
+		return false
+	}
+	if val.FailCount > defaultMaxVerifyFailCount {
+		return false
+	}
+	if val.Verified {
+		return false
+	}
+	if val.Code != code {
+		um.db.Where("id", val.ID).UpdateColumn("fail_count", val.FailCount+1)
+		return false
+	}
+	um.db.Delete(&val)
 	return true
 }
 

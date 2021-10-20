@@ -6,9 +6,11 @@ import (
 )
 
 const (
-	SigUserLogin  = "user.login"
-	SigUserLogout = "user.logout"
-	SigUserCreate = "user.create"
+	SigUserLogin         = "user.login"
+	SigUserLogout        = "user.logout"
+	SigUserCreate        = "user.create"
+	SigUserVerifyEmail   = "user.verifyemail"
+	SigUserResetpassword = "user.resetpassword"
 )
 
 func Login(c *gin.Context, user *GinExtUser) {

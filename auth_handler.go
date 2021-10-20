@@ -44,11 +44,19 @@ type PasswordLostForm struct {
 	Email string `json:"email" binding:"required"`
 }
 
+type PasswordChangeForm struct {
+	Password string `json:"password" binding:"required"`
+}
+
 type PasswordResetForm struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
+	Key      string `json:"key" binding:"required"`
 	Code     string `json:"code" binding:"required"`
 }
+
+type BindEmailForm PasswordResetForm
+type VerifyEmailForm PasswordLostForm
 
 type UserInfoResult struct {
 	UserName  string     `json:"username"`
@@ -115,7 +123,10 @@ const docToken = `User get accesstoken with username and password`
 const docRefresh = `User refresh AccessToken`
 const docLogout = `User logout`
 const docPasswordLost = `Find the password`
+const docPasswordChange = `Change the password`
 const docPasswordResetDone = `Reset the password`
+const docBindEmail = `Bind email with password`
+const docVerifyEmail = `Send verify code via email`
 
 func (um *UserManager) RegisterHandler(prefix string, r *gin.Engine) {
 	// Require session
@@ -167,9 +178,40 @@ func (um *UserManager) RegisterHandler(prefix string, r *gin.Engine) {
 		Handler:      um.handleLogout,
 		Doc:          docLogout,
 	})
+
+	RpcDefine(r, &RpcContext{
+		OnlyPost:     true,
+		AuthRequired: true,
+		Form:         VerifyEmailForm{},
+		Result:       "",
+		RelativePath: filepath.Join(prefix, "/verifyemail"),
+		Handler:      um.handleVerifyEmail,
+		Doc:          docVerifyEmail,
+	})
+
+	RpcDefine(r, &RpcContext{
+		OnlyPost:     true,
+		AuthRequired: true,
+		Form:         BindEmailForm{},
+		Result:       true,
+		RelativePath: filepath.Join(prefix, "/bindemail"),
+		Handler:      um.handleBindEmail,
+		Doc:          docBindEmail,
+	})
+
+	RpcDefine(r, &RpcContext{
+		OnlyPost:     true,
+		AuthRequired: true,
+		Form:         PasswordChangeForm{},
+		Result:       true,
+		RelativePath: filepath.Join(prefix, "/password/change"),
+		Handler:      um.handlePasswordChange,
+		Doc:          docPasswordChange,
+	})
 	RpcDefine(r, &RpcContext{
 		OnlyPost:     true,
 		Form:         PasswordLostForm{},
+		Result:       "",
 		RelativePath: filepath.Join(prefix, "/password/lost"),
 		Handler:      um.handlePasswordLost,
 		Doc:          docPasswordLost,
@@ -177,6 +219,7 @@ func (um *UserManager) RegisterHandler(prefix string, r *gin.Engine) {
 	RpcDefine(r, &RpcContext{
 		OnlyPost:     true,
 		Form:         PasswordResetForm{},
+		Result:       true,
 		RelativePath: filepath.Join(prefix, "/password/reset"),
 		Handler:      um.handlePasswordReset,
 		Doc:          docPasswordResetDone,
@@ -189,7 +232,7 @@ func (um *UserManager) handleRegister(c *gin.Context) {
 	if form.UserName == "" {
 		form.UserName = form.Email
 	}
-	
+
 	if um.IsExists(form.UserName) {
 		RpcFail(c, errUsernameExists, "username is exists")
 		return
@@ -349,9 +392,58 @@ func (um *UserManager) handleRefresh(c *gin.Context) {
 	})
 }
 
-func (um *UserManager) handlePasswordLost(c *gin.Context) {
+func (um *UserManager) handleVerifyEmail(c *gin.Context) {
+	user := CurrentUser(c)
+	form := c.MustGet(RpcFormField).(*VerifyEmailForm)
+	key, code := um.genVerifyCode(user, form.Email)
 
+	Sig().Emit(SigUserVerifyEmail, user, form.Email, code)
+	RpcOk(c, key)
+}
+
+func (um *UserManager) handleBindEmail(c *gin.Context) {
+	user := CurrentUser(c)
+	form := c.MustGet(RpcFormField).(*BindEmailForm)
+	if !um.verifyCode(form.Key, form.Email, form.Code) {
+		RpcOk(c, false)
+		return
+	}
+	um.SetPassword(user, form.Password)
+	um.SetEmail(user, form.Email)
+	RpcOk(c, true)
+}
+
+func (um *UserManager) handlePasswordChange(c *gin.Context) {
+	user := CurrentUser(c)
+	form := c.MustGet(RpcFormField).(*PasswordChangeForm)
+	um.SetPassword(user, form.Password)
+	RpcOk(c, true)
+}
+
+func (um *UserManager) handlePasswordLost(c *gin.Context) {
+	form := c.MustGet(RpcFormField).(*PasswordLostForm)
+	user, err := um.GetByEmail(form.Email)
+	if err != nil {
+		RpcOk(c, "")
+		return
+	}
+
+	key, code := um.genVerifyCode(user, form.Email)
+	Sig().Emit(SigUserResetpassword, user, form.Email, code)
+	RpcOk(c, key)
 }
 
 func (um *UserManager) handlePasswordReset(c *gin.Context) {
+	form := c.MustGet(RpcFormField).(*PasswordResetForm)
+	user, err := um.GetByEmail(form.Email)
+	if err != nil {
+		RpcOk(c, false)
+		return
+	}
+	if !um.verifyCode(form.Key, form.Email, form.Code) {
+		RpcOk(c, false)
+		return
+	}
+	um.SetPassword(user, form.Password)
+	RpcOk(c, true)
 }
