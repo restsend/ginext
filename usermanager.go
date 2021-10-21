@@ -165,6 +165,10 @@ func (um *UserManager) SetLastLogin(user *GinExtUser, lastIp string) {
 	um.db.Model(user).Updates(vals)
 }
 
+func (um *UserManager) SetUserName(user *GinExtUser, val string) {
+	um.db.Model(user).Updates(map[string]interface{}{"UserName": val})
+}
+
 func (um *UserManager) SetEmail(user *GinExtUser, val string) {
 	um.db.Model(user).Updates(map[string]interface{}{"Email": val})
 }
