@@ -395,6 +395,13 @@ func (um *UserManager) handleRefresh(c *gin.Context) {
 func (um *UserManager) handleVerifyEmail(c *gin.Context) {
 	user := CurrentUser(c)
 	form := c.MustGet(RpcFormField).(*VerifyEmailForm)
+
+	_, err := um.GetByEmail(form.Email)
+	if err == nil {
+		RpcOk(c, "")
+		return
+	}
+
 	key, code := um.genVerifyCode(user, form.Email)
 
 	Sig().Emit(SigUserVerifyEmail, user, form.Email, code)
