@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/getsentry/sentry-go"
-	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/sessions/memstore"
@@ -225,17 +223,6 @@ func (cfg *GinExt) WithGinExt(r *gin.Engine) {
 
 	if gin.Mode() != gin.ReleaseMode {
 		registerDocHandler(r)
-	} else {
-		sentryDsn := cfg.GetValue("SENTRY_DSN")
-		if len(sentryDsn) > 0 {
-			err := sentry.Init(sentry.ClientOptions{
-				Dsn: sentryDsn,
-			})
-			if err != nil {
-				log.Fatalf("sentry.Init: %s", err)
-			}
-			r.Use(sentrygin.New(sentrygin.Options{}))
-		}
 	}
 }
 
