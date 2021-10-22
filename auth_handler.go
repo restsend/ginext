@@ -417,6 +417,7 @@ func (um *UserManager) handleBindEmail(c *gin.Context) {
 	}
 	um.SetPassword(user, form.Password)
 	um.SetEmail(user, form.Email)
+	um.SetActived(user, true)
 	RpcOk(c, true)
 }
 
