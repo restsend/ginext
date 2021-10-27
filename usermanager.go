@@ -95,6 +95,14 @@ func (um *UserManager) Create(username, email, password string) (user *GinExtUse
 	return user, result.Error
 }
 
+func (um *UserManager) GetById(userID uint) (user *GinExtUser, err error) {
+	result := um.db.Take(&user, userID)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return user, nil
+}
+
 func (um *UserManager) Get(username string) (user *GinExtUser, err error) {
 	result := um.db.Where("user_name", strings.ToLower(username)).Take(&user)
 	if result.Error != nil {
