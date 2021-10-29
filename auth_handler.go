@@ -193,6 +193,15 @@ func (um *UserManager) RegisterHandler(prefix string, r *gin.Engine) {
 
 	RpcDefine(r, &RpcContext{
 		OnlyPost:     true,
+		Form:         VerifyEmailForm{},
+		Result:       "",
+		RelativePath: filepath.Join(prefix, "/verifyemail/new"),
+		Handler:      um.handleVerifyEmailNewUser,
+		Doc:          docVerifyEmail,
+	})
+
+	RpcDefine(r, &RpcContext{
+		OnlyPost:     true,
 		AuthRequired: true,
 		Form:         BindEmailForm{},
 		Result:       true,
@@ -245,11 +254,13 @@ func (um *UserManager) handleRegister(c *gin.Context) {
 		return
 	}
 
-	if form.Code != "" && form.Key != "" {
+	vals := map[string]interface{}{}
+	if um.hasVerifyCode(form.Email) {
 		if !um.verifyCode(form.Key, form.Email, form.Code) {
 			RpcFail(c, errBadVerifyCode, "bad verifycode")
 			return
 		}
+		vals["Actived"] = true
 	}
 
 	user, err := um.Create(form.UserName, form.Email, form.Password)
@@ -257,7 +268,6 @@ func (um *UserManager) handleRegister(c *gin.Context) {
 		RpcFail(c, errServerError, "create user fail")
 		return
 	}
-	vals := map[string]interface{}{}
 	if len(form.DisplayName) > 0 {
 		vals["DisplayName"] = form.DisplayName
 	}
@@ -399,6 +409,20 @@ func (um *UserManager) handleRefresh(c *gin.Context) {
 		Token:     userToken.Token,
 		ExpiredAt: expire,
 	})
+}
+
+func (um *UserManager) handleVerifyEmailNewUser(c *gin.Context) {
+	form := c.MustGet(RpcFormField).(*VerifyEmailForm)
+	_, err := um.GetByEmail(form.Email)
+	if err == nil {
+		RpcFail(c, errEmailExists, "Email has already exists")
+		return
+	}
+
+	key, code := um.genVerifyCode(nil, form.Email)
+
+	Sig().Emit(SigUserVerifyEmail, nil, form.Email, code)
+	RpcOk(c, key)
 }
 
 func (um *UserManager) handleVerifyEmail(c *gin.Context) {

@@ -229,6 +229,30 @@ func TestActivedLogin(t *testing.T) {
 		assert.EqualError(t, err, "user need actived first")
 	}
 }
+func TestVerifyRegisterEmail(t *testing.T) {
+	um, r := NewTestUserManager()
+	um.RegisterHandler("/auth", r)
+
+	client := NewTestHTTPClient(r)
+	addUser(t, client, r, "bob", "bademail@unittest", "123456")
+	{
+		form := VerifyEmailForm{
+			Email: "alice@example.org",
+		}
+		key := ""
+		err := client.Call("/auth/verifyemail/new", &form, &key)
+		assert.Nil(t, err)
+	}
+	{
+		form := RegisterUserForm{
+			Email:    "alice@example.org",
+			Password: "password",
+		}
+		var info UserInfoResult
+		err := client.Call("/auth/register", &form, &info)
+		assert.NotNil(t, err)
+	}
+}
 
 func TestVerifyBindEmail(t *testing.T) {
 	um, r := NewTestUserManager()

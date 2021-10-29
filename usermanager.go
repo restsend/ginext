@@ -226,6 +226,13 @@ func (um *UserManager) CheckForceActived(user *GinExtUser) bool {
 	return true
 }
 
+func (um *UserManager) hasVerifyCode(email string) bool {
+	var val GinVerifyCode
+	tx := um.db.Where("source", email).Where("verified", false).Where("expired_at > ?", time.Now())
+	result := tx.Take(&val)
+	return result.Error == nil
+}
+
 func (um *UserManager) genVerifyCode(user *GinExtUser, email string) (string, string) {
 	key := RandText(um.VerifyKeyLength)
 	if user != nil {
