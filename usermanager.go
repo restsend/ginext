@@ -20,6 +20,7 @@ const (
 	errInvalidParams
 	errNotAllowed
 	errActiveRequired
+	errBadVerifyCode
 	errServerError
 )
 

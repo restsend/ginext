@@ -28,6 +28,8 @@ type RegisterUserForm struct {
 	LastName    string `json:"lastName"`
 	Locale      string `json:"locale"`
 	Timezone    string `json:"timezone"`
+	Code        string `json:"code"`
+	Key         string `json:"key"`
 }
 
 type LoginForm struct {
@@ -241,6 +243,13 @@ func (um *UserManager) handleRegister(c *gin.Context) {
 	if um.IsExistsByEmail(form.Email) {
 		RpcFail(c, errEmailExists, "email is exists")
 		return
+	}
+
+	if form.Code != "" && form.Key != "" {
+		if !um.verifyCode(form.Key, form.Email, form.Code) {
+			RpcFail(c, errBadVerifyCode, "bad verifycode")
+			return
+		}
 	}
 
 	user, err := um.Create(form.UserName, form.Email, form.Password)
