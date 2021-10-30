@@ -12,9 +12,9 @@ const (
 	SigUserLogout = "user.logout"
 	//SigUserCreate: user *GinExtUser, c *gin.Context
 	SigUserCreate = "user.create"
-	//SigUserVerifyEmail: user *GinExtUser, email string , code string
+	//SigUserVerifyEmail: user *GinExtUser, email string , code, locale string
 	SigUserVerifyEmail = "user.verifyemail"
-	//SigUserResetpassword: user *GinExtUser, email string , code string
+	//SigUserResetpassword: user *GinExtUser, email string , code, locale string
 	SigUserResetpassword = "user.resetpassword"
 )
 

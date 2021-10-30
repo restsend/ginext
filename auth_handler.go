@@ -43,7 +43,8 @@ type TokenRefreshForm struct {
 }
 
 type PasswordLostForm struct {
-	Email string `json:"email" binding:"required"`
+	Email  string `json:"email" binding:"required"`
+	Locale string `json:"locale"`
 }
 
 type PasswordChangeForm struct {
@@ -421,7 +422,7 @@ func (um *UserManager) handleVerifyEmailNewUser(c *gin.Context) {
 
 	key, code := um.genVerifyCode(nil, form.Email)
 
-	Sig().Emit(SigUserVerifyEmail, nil, form.Email, code)
+	Sig().Emit(SigUserVerifyEmail, nil, form.Email, code, form.Locale)
 	RpcOk(c, key)
 }
 
@@ -437,7 +438,7 @@ func (um *UserManager) handleVerifyEmail(c *gin.Context) {
 
 	key, code := um.genVerifyCode(user, form.Email)
 
-	Sig().Emit(SigUserVerifyEmail, user, form.Email, code)
+	Sig().Emit(SigUserVerifyEmail, user, form.Email, code, form.Locale)
 	RpcOk(c, key)
 }
 
@@ -470,7 +471,7 @@ func (um *UserManager) handlePasswordLost(c *gin.Context) {
 	}
 
 	key, code := um.genVerifyCode(user, form.Email)
-	Sig().Emit(SigUserResetpassword, user, form.Email, code)
+	Sig().Emit(SigUserResetpassword, user, form.Email, code, form.Locale)
 	RpcOk(c, key)
 }
 
