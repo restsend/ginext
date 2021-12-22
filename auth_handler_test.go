@@ -135,6 +135,15 @@ func TestLoginSession(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.Equal(t, resp["username"], "bob")
 
+		{
+			result := um.db.Model(&GinExtUser{}).Where("user_name", "bob").UpdateColumn("Enabled", false)
+			assert.Equal(t, result.RowsAffected, int64(1))
+			w = client.Post("/current", nil)
+			resp = client.CheckResponse(t, w)
+			assert.NotNil(t, resp)
+			assert.Equal(t, resp["username"], "BAD SESSION")
+			um.db.Model(&GinExtUser{}).Where("user_name", "bob").UpdateColumn("Enabled", true)
+		}
 		w = client.Post("/auth/logout", nil)
 		resp = client.CheckResponse(t, w)
 		assert.NotNil(t, resp)

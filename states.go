@@ -39,7 +39,7 @@ func CurrentUser(c *gin.Context) (user *GinExtUser) {
 	}
 
 	um := c.MustGet(UserMangerField).(*UserManager)
-	result := um.db.First(&user, userId)
+	result := um.db.Where("id", userId).Where("Enabled", true).Take(&user)
 	if result.Error != nil {
 		return nil
 	}
