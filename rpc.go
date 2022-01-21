@@ -100,3 +100,10 @@ func RpcDefine(r *gin.Engine, ctx *RpcContext) {
 	}
 	AddDoc(ctx)
 }
+
+func RpcDefines(r *gin.Engine, appLabel string, ctxs []RpcContext) {
+	AddDocAppLabel(appLabel)
+	for i := 0; i < len(ctxs); i++ {
+		RpcDefine(r, &ctxs[i])
+	}
+}
