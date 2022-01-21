@@ -149,6 +149,10 @@ func (c *GinExt) Init() (err error) {
 	return err
 }
 
+func (c *GinExt) IsUnitTest() bool {
+	return c.DbDriver == "sqlite" && strings.Contains(c.DbDSN, "memory")
+}
+
 func (c *GinExt) initDB() (err error) {
 	newLogger := logger.New(
 		log.New(c.LogWriter, "\r\n", log.LstdFlags), // io writer

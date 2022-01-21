@@ -202,3 +202,15 @@ func (wm *WorkerManager) Tidyup(maxCount int) {
 	tx := wm.db.Where("done", true).Where("failed", false).Limit(maxCount).Order("created_at")
 	tx.Delete(GinTask{})
 }
+
+func (wm *WorkerManager) EmitTask(taskID uint, eventName string, h WorkHandle) {
+	if taskID <= 0 {
+		return
+	}
+	if wm.ext.IsUnitTest() {
+		t := GinTask{ObjectID: int64(taskID)}
+		h(&t)
+	} else {
+		wm.Add(int64(taskID), eventName, "", 0)
+	}
+}
