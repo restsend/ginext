@@ -98,7 +98,7 @@ func (um *UserManager) loadUMWithGin() gin.HandlerFunc {
 		if len(authValue) > 0 {
 			vals := strings.Split(authValue, " ")
 			if len(vals) <= 1 || vals[0] != "Bearer" {
-				RpcFail(c, http.StatusBadRequest, "invalid token format")
+				//RpcFail(c, http.StatusBadRequest, "invalid token format")
 				return
 			}
 			obj, err := um.GetUserByToken(vals[1])
