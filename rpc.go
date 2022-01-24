@@ -10,12 +10,13 @@ import (
 )
 
 type RpcContext struct {
-	AuthRequired bool
-	OnlyPost     bool
-	Form         interface{}
-	Result       interface{}
-	RelativePath string
-	Handler      gin.HandlerFunc
+	AuthRequired    bool
+	OnlyPost        bool
+	ReduceDataField bool
+	Form            interface{}
+	Result          interface{}
+	RelativePath    string
+	Handler         gin.HandlerFunc
 	//Markdown Document
 	Doc string
 }
@@ -28,6 +29,10 @@ func RpcOk(c *gin.Context, obj interface{}) {
 		}
 	}
 
+	if _, ok = c.Get(RpcReduceDataField); ok {
+		c.JSON(http.StatusOK, obj)
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"code": http.StatusOK,
 		"data": obj,
@@ -53,6 +58,10 @@ func RpcError(c *gin.Context, err error) {
 func RpcDefine(r *gin.Engine, ctx *RpcContext) {
 	funcObj := func(c *gin.Context) {
 		c.Set(RpcResultField, ctx.Result)
+		if ctx.ReduceDataField {
+			c.Set(RpcReduceDataField, ctx.ReduceDataField)
+		}
+
 		if ctx.AuthRequired {
 			if CurrentUser(c) == nil {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{

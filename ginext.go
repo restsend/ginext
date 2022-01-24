@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+)
+
+const (
+	Key_SITE_ADMIN     = "SITE_ADMIN"
+	Key_SITE_NAME      = "SITE_NAME"
+	Key_SITE_LINK      = "SITE_LINK"
+	Key_NOTIFY_BOT_URL = "NOTIFY_BOT_URL"
 )
 
 const (
@@ -238,6 +246,30 @@ func GetValueEx(db *gorm.DB, key string) string {
 		return ""
 	}
 	return v.Value
+}
+
+func GetInt64ValueEx(db *gorm.DB, key string, defaultVal int64) int64 {
+	v := GetValueEx(db, key)
+	if v == "" {
+		return defaultVal
+	}
+	val, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return defaultVal
+	}
+	return val
+}
+
+func GetIntValueEx(db *gorm.DB, key string, defaultVal int) int {
+	v := GetValueEx(db, key)
+	if v == "" {
+		return defaultVal
+	}
+	val, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return defaultVal
+	}
+	return int(val)
 }
 
 func SetValueEx(db *gorm.DB, key, value string) {
