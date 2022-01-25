@@ -30,6 +30,7 @@ type RegisterUserForm struct {
 	Timezone    string `json:"timezone"`
 	Code        string `json:"code"`
 	Key         string `json:"key"`
+	Source      string `json:"source"`
 }
 
 type LoginForm struct {
@@ -277,6 +278,9 @@ func (um *UserManager) handleRegister(c *gin.Context) {
 	}
 	if len(form.LastName) > 0 {
 		vals["LastName"] = form.LastName
+	}
+	if len(form.Source) > 0 {
+		vals["Source"] = form.Source
 	}
 
 	if len(vals) > 0 {

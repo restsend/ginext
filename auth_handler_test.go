@@ -48,6 +48,7 @@ func TestUserRegister(t *testing.T) {
 			LastName:    "AliceL",
 			Timezone:    "-480",
 			Locale:      "zh-CN",
+			Source:      "unittest",
 		}
 		var r UserInfoResult
 		err := client.Call("/auth/register", &form, &r)
@@ -69,6 +70,9 @@ func TestUserRegister(t *testing.T) {
 		assert.Equal(t, profile.LastName, form.LastName)
 		assert.Equal(t, profile.Timezone, form.Timezone)
 		assert.Equal(t, profile.Locale, form.Locale)
+		u, err := um.GetByEmail("alice@example.org")
+		assert.Nil(t, err)
+		assert.Equal(t, u.Source, form.Source)
 	}
 }
 
