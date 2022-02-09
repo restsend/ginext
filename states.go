@@ -47,6 +47,13 @@ func CurrentUser(c *gin.Context) (user *GinExtUser) {
 	return user
 }
 
+func CurrentToken(c *gin.Context) (token *GinToken) {
+	if obj, ok := c.Get(TokenField); ok && obj != nil {
+		return obj.(*GinToken)
+	}
+	return nil
+}
+
 func Logout(c *gin.Context) {
 	c.Set(UserIdField, nil)
 	session := sessions.Default(c)

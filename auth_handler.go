@@ -109,6 +109,7 @@ func (um *UserManager) loadUMWithGin() gin.HandlerFunc {
 				if userId != obj.OwnerID {
 					um.TouchToken(obj.ID)
 					Login(c, &obj.Owner)
+					c.Set(TokenField, obj)
 				}
 			} else {
 				RpcFail(c, http.StatusBadRequest, "invalid accesstoken")

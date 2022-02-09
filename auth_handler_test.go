@@ -180,10 +180,12 @@ func TestLoginToken(t *testing.T) {
 		r.Any("/current", func(c *gin.Context) {
 			curretUser := CurrentUser(c)
 			if curretUser == nil {
+				assert.Nil(t, CurrentToken(c))
 				c.JSON(200, gin.H{
 					"username": "BAD SESSION",
 				})
 			} else {
+				assert.NotNil(t, CurrentToken(c))
 				c.JSON(200, gin.H{
 					"username": curretUser.UserName,
 				})
