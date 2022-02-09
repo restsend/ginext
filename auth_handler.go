@@ -96,7 +96,7 @@ func (um *UserManager) loadUMWithGin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Set(UserMangerField, um)
 		authValue := c.GetHeader("Authorization")
-		if len(authValue) > 0 {
+		if um.EnabledTokenAuthorization && len(authValue) > 0 {
 			vals := strings.Split(authValue, " ")
 			if len(vals) <= 1 || vals[0] != "Bearer" {
 				//RpcFail(c, http.StatusBadRequest, "invalid token format")

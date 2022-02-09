@@ -40,10 +40,11 @@ type UserManager struct {
 	TokenExpired time.Duration
 	TokenLength  int
 
-	VerifyCodeExpired      time.Duration
-	VerifyKeyLength        int
-	VerifyCodeLength       int
-	VerifyCodeMaxFailCount int
+	VerifyCodeExpired         time.Duration
+	VerifyKeyLength           int
+	VerifyCodeLength          int
+	VerifyCodeMaxFailCount    int
+	EnabledTokenAuthorization bool
 }
 
 func NewUserManager(ext *GinExt) *UserManager {
@@ -54,10 +55,11 @@ func NewUserManager(ext *GinExt) *UserManager {
 		TokenExpired: defaultTokenExpired,
 		TokenLength:  defaultTokenLength,
 
-		VerifyCodeExpired:      defaultVerifyCodeExpired,
-		VerifyKeyLength:        defaultVerifyKeyLength,
-		VerifyCodeLength:       defaultVerifyCodeLength,
-		VerifyCodeMaxFailCount: defaultVerifyMaxFailCount,
+		VerifyCodeExpired:         defaultVerifyCodeExpired,
+		VerifyKeyLength:           defaultVerifyKeyLength,
+		VerifyCodeLength:          defaultVerifyCodeLength,
+		VerifyCodeMaxFailCount:    defaultVerifyMaxFailCount,
+		EnabledTokenAuthorization: true,
 	}
 }
 
