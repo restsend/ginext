@@ -40,6 +40,13 @@ func RpcOk(c *gin.Context, obj interface{}) {
 }
 
 func RpcFail(c *gin.Context, failCode int, msg string) {
+	if _, ok := c.Get(RpcReduceDataField); ok {
+		c.AbortWithStatusJSON(failCode, gin.H{
+			"msg": msg,
+		})
+		return
+	}
+
 	c.AbortWithStatusJSON(http.StatusOK, gin.H{
 		"code": failCode,
 		"msg":  msg,
