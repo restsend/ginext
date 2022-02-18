@@ -8,8 +8,6 @@ import (
 	"reflect"
 	"text/template"
 	"time"
-
-	"github.com/itchyny/timefmt-go"
 )
 
 func init() {
@@ -33,30 +31,6 @@ func RandText(n int) string {
 
 func RandNumberText(n int) string {
 	return randRunes(n, numberRunes)
-}
-
-const dateFmt = "%Y-%m-%d"
-const dateTimeFmt = "%Y-%m-%d %H:%M:%S"
-
-func ParseFormTime(v *string) *time.Time {
-	if v == nil {
-		return nil
-	}
-	t, err := timefmt.Parse(*v, dateFmt)
-	if err != nil {
-		t, err = timefmt.Parse(*v, dateTimeFmt)
-		if err != nil {
-			return nil
-		}
-	}
-	return &t
-}
-
-func ToUTCTime(v int64) string {
-	if v <= 0 {
-		return "2000-01-02 03:04:05"
-	}
-	return timefmt.Format(time.Unix(v, 0), dateTimeFmt)
 }
 
 func FormatData(fmtText string, ctx map[string]string, fallbackFmt string) string {

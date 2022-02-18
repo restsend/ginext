@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gomarkdown/markdown"
 )
 
 const ApiDocsJSONUri = "/docs/api.json"
@@ -208,7 +207,7 @@ func AddDoc(ctx *RpcContext) {
 	}
 
 	if len(ctx.Doc) > 0 {
-		doc.DocString = string(markdown.ToHTML([]byte(ctx.Doc), nil, nil))
+		doc.DocString = ctx.Doc
 	}
 	rpcDocs = append(rpcDocs, doc)
 }

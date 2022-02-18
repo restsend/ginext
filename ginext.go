@@ -14,8 +14,6 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
-	"github.com/gin-contrib/sessions/memstore"
-	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -49,7 +47,6 @@ type GinExt struct {
 	DbDriver  string `json:"db_driver"`
 	DbDSN     string `json:"db_dsn"`
 	ServeAddr string `json:"serve_addr"`
-	RedisAddr string `json:"redis_addr"`
 
 	DbInstance   *gorm.DB       `json:"-"`
 	sessionStore sessions.Store `json:"-"`
@@ -90,19 +87,9 @@ func NewGinExt(appDir string) *GinExt {
 		DbDriver:      "sqlite",
 		DbDSN:         "file::memory:",
 		ServeAddr:     ":8080",
-		RedisAddr:     "127.0.0.1:6379",
 		LogWriter:     os.Stdout,
 	}
 
-	withMysql := os.Getenv("WITH_MYSQL")
-	if len(withMysql) > 0 {
-		/*
-			docker run -ti --rm -e MYSQL_ALLOW_EMPTY_PASSWORD=1 -e MYSQL_DATABASE=testdb -p 12306:3306 mysql:8.0.23
-			export WITH_MYSQL="root@tcp(127.0.0.1:12306)/testdb?charset=utf8mb4&parseTime=True&loc=Local"
-		*/
-		cfg.DbDSN = withMysql
-		cfg.DbDriver = "mysql"
-	}
 	return cfg
 }
 
@@ -111,6 +98,7 @@ func (c *GinExt) Session() *GinExt {
 	v.DbInstance = c.DbInstance.Session(&gorm.Session{})
 	return &v
 }
+
 func (c *GinExt) FilePath(path string) string {
 	return filepath.Join(c.AppDir, path)
 }
@@ -152,7 +140,7 @@ func (c *GinExt) Init() (err error) {
 	}
 
 	if len(c.SessionStore) > 0 {
-		err = c.initSession()
+		c.sessionStore = cookie.NewStore([]byte(c.SessionSecret))
 	}
 	return err
 }
@@ -184,23 +172,6 @@ func (c *GinExt) initDB() (err error) {
 	err = c.DbInstance.AutoMigrate(&GinExtConfig{})
 	if err != nil {
 		log.Panicf("Migrate GinExtConfig Fail %v", err)
-	}
-	return nil
-}
-
-func (c *GinExt) initSession() (err error) {
-	if c.SessionStore == "memstore" {
-		c.sessionStore = memstore.NewStore([]byte(c.SessionSecret))
-	} else if c.SessionStore == "redis" {
-		store, err := redis.NewStore(10, "tcp", c.RedisAddr, "", []byte(c.SessionSecret))
-		if err != nil {
-			log.Printf("redis session fail (fallback cookie) -%v", err)
-			c.sessionStore = cookie.NewStore([]byte(c.SessionSecret))
-		} else {
-			c.sessionStore = store
-		}
-	} else {
-		c.sessionStore = cookie.NewStore([]byte(c.SessionSecret))
 	}
 	return nil
 }

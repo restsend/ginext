@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <title>API Documents</title>
 </head>
 
@@ -92,7 +93,7 @@
                         $(".rpclist>li.active").removeClass("active");
                         fobj.addClass("active");
                         $(".funcuri").html(uriHtml);
-                        $(".funcdoc").html(item.doc);
+                        $(".funcdoc").html(marked.parse(item.doc));
 
                         if (item.fields == undefined) {
                             $(".funcfieldsarea").addClass("d-none");

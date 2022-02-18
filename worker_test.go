@@ -2,6 +2,7 @@ package ginext
 
 import (
 	"errors"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -9,8 +10,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var unittestDB = "/tmp/ginext_unittest.db"
+
+func Tidyup() {
+	os.Remove(unittestDB)
+}
+
 func NewTestWorkerManager() *WorkerManager {
 	cfg := NewGinExt("..")
+	cfg.DbDSN = "file:" + unittestDB
 	cfg.Init()
 
 	wm := NewWorkerManager(cfg)
@@ -19,6 +27,7 @@ func NewTestWorkerManager() *WorkerManager {
 	return wm
 }
 func TestWorkerManager(t *testing.T) {
+	defer Tidyup()
 	wm := NewTestWorkerManager()
 	{
 		err := wm.Add(1, "hello", "{}", 2*time.Second)
@@ -54,6 +63,7 @@ func TestWorkerManager(t *testing.T) {
 }
 
 func TestWorker(t *testing.T) {
+	defer Tidyup()
 	wm := NewTestWorkerManager()
 	var err error
 	startTime := time.Now()
@@ -88,6 +98,7 @@ func TestWorker(t *testing.T) {
 	}
 }
 func TestWorkerFail(t *testing.T) {
+	defer Tidyup()
 	wm := NewTestWorkerManager()
 	var err error
 	{
