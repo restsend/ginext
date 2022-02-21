@@ -39,9 +39,10 @@
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th scope="col">Required</th>
-                                        <th scope="col">Name</th>
-                                        <th scope="col">Type</th>
+                                        <th scope="col" class="col-1">Required</th>
+                                        <th scope="col" class="col-1">Type</th>
+                                        <th scope="col" class="col-2">Name</th>
+                                        <th scope="col">Desc</th>
                                     </tr>
                                 </thead>
                                 <tbody class="funcfields">
@@ -61,38 +62,87 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        function buildFieldsRow(fields, requiredFieldName) {
+            var ft = ''
+            fields.forEach(field => {
+                ft += buildFieldRow(field, requiredFieldName);
+            })
+            return ft
+        }
+
+        function buildFieds(fields, requiredFieldName) {
+            return `<table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="col-1">${requiredFieldName}</th>
+                            <th scope="col" class="col-1">Type</th>
+                            <th scope="col" class="col-2">Name</th>
+                            <th scope="col">Desc</th>
+                        </tr>
+                    </thead>
+                    <tbody class="funcfields">
+                        ${buildFieldsRow(fields, requiredFieldName)}
+                    </tbody>
+                </table>`
+        }
+
+        function buildFieldRow(field, requiredFieldName) {
+            var requiredText = '';
+            if (field.required) {
+                requiredText = `<span class='badge badge-warning'>YES</span>`;
+            }
+            if (field.canNull) {
+                requiredText = `<span class='badge badge-warning'>YES</span>`;
+            }
+
+            var fieldsText = '';
+            if (field.type.endsWith("object") && field.fields) {
+                fieldsText = buildFieds(field.fields, requiredFieldName);
+            }
+
+            var fieldType = 'badge-info';
+            if (/object|\{|\[/i.test(field.type)) {
+                fieldType = 'badge-success';
+            }
+            return `<tr>
+                    <th scope='row'> ${requiredText}</th>
+                    <td><span class='badge ${fieldType}'>${field.type}</span></td>
+                    <td>${field.name}</td>
+                    <td>${fieldsText}</td>
+                </tr>`
+        }
+
         function initData() {
             $.getJSON("/docs/api.json", function (data) {
                 var idx = 0;
-                data.forEach(item => {
-                    idx++;
+                for (let idx = 0; idx < data.length; idx++) {
+                    let item = data[idx];
                     if (item.isGroup) {
-                        var btnGroup = $("<a class='btn btn-primary' href='#group" + idx + "'>" + item.uri + "</a>");
-                        $(".funcgroups").append(btnGroup);
+                        $(".funcgroups").append($(`<a class='btn btn-primary' href='#group${idx}'>${item.uri}</a>`));
+                        $(".rpclist").append($(`<a class='list-group-item list-group-item-primary' name='group${idx}'>${item.uri}</a>`));
+                    } else {
+                        item.uriHtml = '';
+                        if (!item.onlyPost) {
+                            item.uriHtml = "<span class='badge badge-pill badge-info d-small'>GET</span>";
+                        }
+                        item.uriHtml += item.uri;
+                        item.fobj = $(`<li class='list-group-item  list-group-item-action'> ${item.uriHtml}</li>`);
+                        $(".rpclist").append(item.fobj);
                     }
-                })
-                var idx = 0;
-                data.forEach(item => {
-                    idx++;
-                    if (item.isGroup) {
-                        var uriHtml = $("<a class='list-group-item list-group-item-primary' name='group" + idx + "'>" + item.uri + "</a>")
-                        $(".rpclist").append(uriHtml)
-                        return
-                    }
+                }
 
-                    var uriHtml = "";
-                    if (!item.onlyPost) {
-                        uriHtml = "<span class='badge badge-pill badge-info d-small'>GET</span> ";
+                for (let idx = 0; idx < data.length; idx++) {
+                    const item = data[idx];
+                    if (!item.fobj) {
+                        continue
                     }
-                    uriHtml += item.uri;
-                    //
-                    var fobj = $("<li class='list-group-item  list-group-item-action'>" + uriHtml + "</li>")
-                    $(".rpclist").append(fobj)
+                    var fobj = item.fobj;
                     fobj.click(function () {
                         $(".funcarea").removeClass("d-none");
                         $(".rpclist>li.active").removeClass("active");
-                        fobj.addClass("active");
-                        $(".funcuri").html(uriHtml);
+                        item.fobj.addClass("active");
+
+                        $(".funcuri").html(item.uriHtml);
                         $(".funcdoc").html(marked.parse(item.doc));
 
                         if (item.fields == undefined) {
@@ -102,63 +152,20 @@
                         } else {
                             $(".funcfieldsareaempty").addClass("d-none");
                             $(".funcfieldsarea").removeClass("d-none");
-
-                            $(".funcfields").html("");
-
-                            item.fields.forEach(field => {
-                                var ft = "<tr><th scope='row'>";
-                                if (field.required) {
-                                    ft += "<span class='badge badge-warning'>YES</span>";
-                                } else {
-                                    ft += "<span class='badge badge-Light'>NO</span>";
-                                }
-                                ft += "</th>";
-                                ft += "<td>" + field.name + "</td>";
-                                ft += "<td>" + field.type + "</td></tr>";
-                                $(".funcfields").append($(ft))
-                            });
+                            $(".funcfields").html(buildFieldsRow(item.fields, 'Required'));
                         }
                         if (item.resultType == undefined) {
                             return
                         }
 
-                        if (!item.resultType.type.endsWith("object")) {
-                            var robj = $("<b>Result Type: </b><span class='badge badge-success'>" + item.resultType.type + "</span>")
-                            $(".funcresult").html(robj)
-                        } else {
-                            var robj = "<span>Result Type: </span><b class='badge badge-success'>object</b>"
-                            var buildResultFields = function (fileds) {
-                                var robj = "<ul >"
-                                fileds.forEach(field => {
-                                    robj += "<li class='fw-bold d-flex justify-content-between align-items-start'><span>"
-                                    robj += field.name + "</span>"
-
-                                    if (field.canNull) {
-                                        robj += "<span class='badge badge-warning'>Optional</span>"
-                                    }
-
-                                    robj += "<span class='badge badge-"
-                                    if (field.type.endsWith("object")) {
-                                        robj += "success"
-
-                                    } else {
-                                        robj += "info"
-                                    }
-
-                                    robj += "'>" + field.type + "</span>"
-                                    robj += "</li>"
-                                    if (field.type.endsWith("object") && field.fields != undefined) {
-                                        robj += buildResultFields(field.fields)
-                                    }
-                                });
-                                robj += "</ul>"
-                                return robj
-                            }
-                            robj += buildResultFields(item.resultType.fields)
-                            $(".funcresult").html($(robj))
+                        var resultText = `<b>Result Type: </b><span class='badge badge-success'>${item.resultType.type}</span>`;
+                        if (item.resultType.type.endsWith("object")) {
+                            resultText = `<b>Result Type: </b>${buildFieldRow(item.resultType, 'Optional')}`;
                         }
-                    })
-                });
+
+                        $(".funcresult").html($(resultText));
+                    });
+                }
             })
         }
         $(document).ready(function () {

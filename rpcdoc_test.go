@@ -3,7 +3,6 @@ package ginext
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 	"reflect"
 	"testing"
@@ -16,6 +15,12 @@ type testEmbedResult struct {
 	Foo      string       `json:"foo"`
 	DeleteAt sql.NullTime `json:"deleteAt"`
 	UserInfoResult
+}
+
+type testStructFieldForm struct {
+	Foo      string          `json:"foo"`
+	DeleteAt sql.NullTime    `json:"deleteAt"`
+	UserInfo *UserInfoResult `json:"info"`
 }
 
 func TestDocString(t *testing.T) {
@@ -31,10 +36,6 @@ func TestDocString(t *testing.T) {
 		OnlyPost:     true,
 		RelativePath: "/mockapi/register",
 		Handler: func(c *gin.Context) {
-			RpcOk(c, UserInfoResult{
-				UserName: "mockuser",
-				Email:    "mockemail",
-			})
 		},
 	})
 
@@ -44,10 +45,14 @@ func TestDocString(t *testing.T) {
 		OnlyPost:     true,
 		RelativePath: "/mockapi/embed",
 		Handler: func(c *gin.Context) {
-			RpcOk(c, UserInfoResult{
-				UserName: "mockuser",
-				Email:    "mockemail",
-			})
+		},
+	})
+
+	RpcDefine(r, &RpcContext{
+		Form:         testStructFieldForm{},
+		OnlyPost:     true,
+		RelativePath: "/mockapi/struct_field",
+		Handler: func(c *gin.Context) {
 		},
 	})
 
@@ -60,14 +65,13 @@ func TestDocString(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &rpcDocs)
 
 	assert.NotNil(t, rpcDocs)
-	assert.Equal(t, len(rpcDocs), 2)
+	assert.Equal(t, len(rpcDocs), 3)
 	assert.Equal(t, len(rpcDocs[0].Fields), 11)
 	assert.Equal(t, rpcDocs[0].Fields[0].Name, "email")
 	assert.Equal(t, rpcDocs[0].Fields[0].Type, "string")
 	assert.True(t, rpcDocs[0].Fields[0].Required)
-
 	assert.Equal(t, rpcDocs[0].ResultType.Type, "object")
-	log.Println(rpcDocs[1].ResultType)
+
 	assert.Equal(t, len(rpcDocs[1].ResultType.Fields), 5)
 	assert.Equal(t, rpcDocs[1].ResultType.Fields[0].Name, "foo")
 	assert.Equal(t, rpcDocs[1].ResultType.Fields[0].Type, "string")
@@ -75,6 +79,21 @@ func TestDocString(t *testing.T) {
 	assert.Equal(t, rpcDocs[1].ResultType.Fields[1].Type, "Date")
 	assert.Equal(t, rpcDocs[1].ResultType.Fields[2].Name, "username")
 	assert.Equal(t, rpcDocs[1].ResultType.Fields[2].Type, "string")
+
+	assert.Equal(t, len(rpcDocs[2].Fields), 3)
+	assert.Equal(t, rpcDocs[2].Fields[0].Name, "foo")
+	assert.Equal(t, rpcDocs[2].Fields[0].Type, "string")
+	assert.Equal(t, rpcDocs[2].Fields[1].Name, "deleteAt")
+	assert.Equal(t, rpcDocs[2].Fields[1].Type, "Date")
+	assert.Equal(t, rpcDocs[2].Fields[2].Name, "info")
+	assert.Equal(t, rpcDocs[2].Fields[2].Type, "object")
+	assert.Equal(t, len(rpcDocs[2].Fields[2].Fields), 3)
+	assert.Equal(t, rpcDocs[2].Fields[2].Fields[0].Name, "username")
+	assert.Equal(t, rpcDocs[2].Fields[2].Fields[0].Type, "string")
+	assert.Equal(t, rpcDocs[2].Fields[2].Fields[1].Name, "email")
+	assert.Equal(t, rpcDocs[2].Fields[2].Fields[1].Type, "string")
+	assert.Equal(t, rpcDocs[2].Fields[2].Fields[2].Name, "lastLogin")
+	assert.Equal(t, rpcDocs[2].Fields[2].Fields[2].Type, "Date")
 
 	w = client.Get(ApiDocsUri)
 	assert.Equal(t, http.StatusOK, w.Code)

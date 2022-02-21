@@ -12,44 +12,48 @@ import (
 const ApiDocsJSONUri = "/docs/api.json"
 const ApiDocsUri = "/docs/api"
 
-type RpcDocField struct {
-	Name     string `json:"name"`
-	Type     string `json:"type"`
-	Required bool   `json:"required"`
-}
-
-type ResultType struct {
-	Name    string       `json:"name"`
-	Type    string       `json:"type"`
-	CanNull bool         `json:"canNull"`
-	Fields  []ResultType `json:"fields,omitempty"`
+type RpcFieldType struct {
+	Name     string         `json:"name"`
+	Type     string         `json:"type"`
+	Required bool           `json:"required"`
+	CanNull  bool           `json:"canNull"`
+	Fields   []RpcFieldType `json:"fields,omitempty"`
 }
 
 type RpcDoc struct {
 	AuthRequired bool `json:"authRequired"`
 	OnlyPost     bool `json:"onlyPost"`
 	//Form
-	Fields       []RpcDocField `json:"fields,omitempty"`
-	ResultType   ResultType    `json:"resultType,omitempty"`
-	RelativePath string        `json:"uri"`
-	DocString    string        `json:"doc"`
-	IsGroup      bool          `json:"isGroup"`
+	Fields       []RpcFieldType `json:"fields,omitempty"`
+	ResultType   RpcFieldType   `json:"resultType,omitempty"`
+	RelativePath string         `json:"uri"`
+	DocString    string         `json:"doc"`
+	IsGroup      bool           `json:"isGroup"`
 }
 
 var rpcDocs []RpcDoc
 
-func parseResultType(rt reflect.Type, name string) (val ResultType) {
+func parseResultType(rt reflect.Type, name string) (val RpcFieldType) {
 	val.Name = name
 
-	if rt.Kind() == reflect.Struct {
+	if rt.Kind() == reflect.Ptr {
+		val.CanNull = true
+		rt = rt.Elem()
+	}
+	if rt.Name() == "NullTime" {
+		val.CanNull = true
+		val.Type = "Date"
+		return val
+	} else if rt.Name() == "Time" {
+		val.Type = "Date"
+		return val
+	} else if rt.Kind() == reflect.Struct {
 		val.Type = "object"
 	} else if rt.Kind() == reflect.Array || rt.Kind() == reflect.Slice {
 		val.Type = "[]object"
 		rt = rt.Elem()
 	} else if rt.Kind() == reflect.Ptr {
 		val.Type = "object"
-		val.CanNull = true
-		rt = rt.Elem()
 	}
 
 	if rt.Kind() == reflect.Struct {
@@ -68,13 +72,13 @@ func parseResultType(rt reflect.Type, name string) (val ResultType) {
 
 			fieldName := strings.Split(jsonTag, ",")[0]
 			if f.Type.Name() == "Time" {
-				fieldRT := ResultType{
+				fieldRT := RpcFieldType{
 					Name: fieldName,
 					Type: "Date",
 				}
 				val.Fields = append(val.Fields, fieldRT)
 			} else if f.Type.Name() == "NullTime" {
-				fieldRT := ResultType{
+				fieldRT := RpcFieldType{
 					Name: fieldName,
 					Type: "Date",
 				}
@@ -140,11 +144,11 @@ func asJsonType(intype string) string {
 	return intype
 }
 
-func parseFileds(rt reflect.Type) []RpcDocField {
+func parseFileds(rt reflect.Type) []RpcFieldType {
 	if rt.Kind() != reflect.Struct {
 		return nil
 	}
-	var docFields []RpcDocField
+	var docFields []RpcFieldType
 	for i := 0; i < rt.NumField(); i++ {
 		f := rt.Field(i)
 
@@ -162,19 +166,25 @@ func parseFileds(rt reflect.Type) []RpcDocField {
 		}
 
 		fieldName := strings.Split(jsonTag, ",")[0]
-		docField := RpcDocField{
-			Name:     fieldName,
-			Required: false,
-		}
+		/*
+			docField := RpcFieldType{
+				Name:     fieldName,
+				Required: false,
+			}
 
-		if f.Type.Kind() != reflect.Ptr {
-			docField.Type = f.Type.Name()
-		} else {
-			docField.Type = f.Type.String()[1:]
-		}
+			if f.Type.Kind() != reflect.Ptr {
+				docField.Type = f.Type.Name()
+			} else {
+				docField.Type = f.Type.String()[1:]
+			}
 
-		docField.Type = asJsonType(docField.Type)
+			docField.Type = asJsonType(docField.Type)
 
+			if f.Tag.Get("binding") == "required" {
+				docField.Required = true
+			}*/
+
+		docField := parseResultType(f.Type, fieldName)
 		if f.Tag.Get("binding") == "required" {
 			docField.Required = true
 		}
