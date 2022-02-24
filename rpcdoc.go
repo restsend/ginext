@@ -33,7 +33,7 @@ type RpcDoc struct {
 
 var rpcDocs []RpcDoc
 
-func parseResultType(rt reflect.Type, name string) (val RpcFieldType) {
+func parseResultType(rt reflect.Type, name string, stacks []string) (val RpcFieldType) {
 	val.Name = name
 
 	if rt.Kind() == reflect.Ptr {
@@ -57,12 +57,20 @@ func parseResultType(rt reflect.Type, name string) (val RpcFieldType) {
 	}
 
 	if rt.Kind() == reflect.Struct {
+		for _, v := range stacks {
+			if rt.Name() == v {
+				val.Type = "object"
+				return val
+			}
+		}
+
+		stacks = append(stacks, rt.Name())
 		for i := 0; i < rt.NumField(); i++ {
 			f := rt.Field(i)
 			jsonTag := f.Tag.Get("json")
 			if f.Anonymous && f.Type.Kind() == reflect.Struct {
 				//
-				embedRT := parseResultType(f.Type, "")
+				embedRT := parseResultType(f.Type, "", stacks)
 				val.Fields = append(val.Fields, embedRT.Fields...)
 				continue
 			}
@@ -85,7 +93,7 @@ func parseResultType(rt reflect.Type, name string) (val RpcFieldType) {
 				fieldRT.CanNull = true
 				val.Fields = append(val.Fields, fieldRT)
 			} else {
-				fieldRT := parseResultType(f.Type, fieldName)
+				fieldRT := parseResultType(f.Type, fieldName, stacks)
 				val.Fields = append(val.Fields, fieldRT)
 			}
 		}
@@ -133,17 +141,6 @@ func parseResultType(rt reflect.Type, name string) (val RpcFieldType) {
 	return val
 }
 
-func asJsonType(intype string) string {
-	if strings.Contains(intype, "Time") {
-		return "Date"
-	} else if strings.Contains(intype, "int") {
-		return "Integer"
-	} else if strings.Contains(intype, "bool") {
-		return "boolean"
-	}
-	return intype
-}
-
 func parseFileds(rt reflect.Type) []RpcFieldType {
 	if rt.Kind() != reflect.Struct {
 		return nil
@@ -166,25 +163,7 @@ func parseFileds(rt reflect.Type) []RpcFieldType {
 		}
 
 		fieldName := strings.Split(jsonTag, ",")[0]
-		/*
-			docField := RpcFieldType{
-				Name:     fieldName,
-				Required: false,
-			}
-
-			if f.Type.Kind() != reflect.Ptr {
-				docField.Type = f.Type.Name()
-			} else {
-				docField.Type = f.Type.String()[1:]
-			}
-
-			docField.Type = asJsonType(docField.Type)
-
-			if f.Tag.Get("binding") == "required" {
-				docField.Required = true
-			}*/
-
-		docField := parseResultType(f.Type, fieldName)
+		docField := parseResultType(f.Type, fieldName, nil)
 		if f.Tag.Get("binding") == "required" {
 			docField.Required = true
 		}
@@ -213,7 +192,7 @@ func AddDoc(ctx *RpcContext) {
 	}
 
 	if ctx.Result != nil {
-		doc.ResultType = parseResultType(reflect.TypeOf(ctx.Result), "")
+		doc.ResultType = parseResultType(reflect.TypeOf(ctx.Result), "", nil)
 	}
 
 	if len(ctx.Doc) > 0 {
