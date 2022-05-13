@@ -103,7 +103,7 @@ func NewGinExt(appDir string) *GinExt {
 		ServeAddr:     ":8080",
 		LogWriter:     os.Stdout,
 	}
-
+	configValueCache, _ = lru.New(512)
 	return cfg
 }
 
@@ -270,8 +270,10 @@ func GetIntValueEx(db *gorm.DB, key string, defaultVal int) int {
 }
 
 func SetValueEx(db *gorm.DB, key, value string) {
-	var v GinExtConfig
 	newKey := strings.ToUpper(key)
+	configValueCache.Remove(newKey)
+
+	var v GinExtConfig
 	result := db.Where("key", newKey).Take(&v)
 	if result.Error != nil {
 		newV := &GinExtConfig{
@@ -282,7 +284,6 @@ func SetValueEx(db *gorm.DB, key, value string) {
 		return
 	}
 	db.Model(&GinExtConfig{}).Where("key", newKey).UpdateColumn("value", value)
-	configValueCache.Remove(newKey)
 }
 
 func (cfg *GinExt) GetValue(key string) string {
