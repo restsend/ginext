@@ -17,6 +17,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	lru "github.com/hashicorp/golang-lru"
 )
 
 const (
@@ -30,6 +32,18 @@ const (
 	DBField     = "ginext_db"
 	ConfigField = "ginext_cfg"
 )
+
+var configValueCache *lru.Cache
+var configCacheExpired time.Duration = 10 * time.Second
+
+type configCacheItem struct {
+	n   time.Time
+	val string
+}
+
+func init() {
+	configValueCache, _ = lru.New(512) // fixed size
+}
 
 // GinExt Config and core info
 type GinExt struct {
@@ -210,12 +224,24 @@ func (cfg *GinExt) WithGinExt(r *gin.Engine) {
 }
 
 func GetValueEx(db *gorm.DB, key string) string {
+	cobj, ok := configValueCache.Get(key)
+	if ok {
+		if time.Since(cobj.(*configCacheItem).n) < configCacheExpired {
+			return cobj.(*configCacheItem).val
+		}
+	}
+
 	var v GinExtConfig
 	newKey := strings.ToUpper(key)
 	result := db.Where("key", newKey).Take(&v)
 	if result.Error != nil {
 		return ""
 	}
+
+	configValueCache.Add(key, &configCacheItem{
+		n:   time.Now(),
+		val: v.Value,
+	})
 	return v.Value
 }
 
@@ -256,6 +282,7 @@ func SetValueEx(db *gorm.DB, key, value string) {
 		return
 	}
 	db.Model(&GinExtConfig{}).Where("key", newKey).UpdateColumn("value", value)
+	configValueCache.Remove(newKey)
 }
 
 func (cfg *GinExt) GetValue(key string) string {

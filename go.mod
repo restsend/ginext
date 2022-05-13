@@ -8,6 +8,7 @@ require (
 	github.com/go-playground/validator/v10 v10.10.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/sessions v1.2.1 // indirect
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-sqlite3 v1.14.11 // indirect
